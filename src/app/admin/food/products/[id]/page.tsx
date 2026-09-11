@@ -1805,6 +1805,7 @@ type ProductForm = {
   imageUrl: string;
   status: ProductStatus;
   featured: boolean;
+  foodLicenseNumber: string; // ← add
   variants: Variant[];
 };
 
@@ -1870,6 +1871,7 @@ function createEmptyForm(productId: string): ProductForm {
     imageUrl: "/images/default-product-placeholder.png",
     status: "ACTIVE",
     featured: false,
+    foodLicenseNumber: "", // ← add
     variants: [
       createEmptyVariant(1),
       createEmptyVariant(2),
@@ -1954,6 +1956,9 @@ function normalizeProduct(raw: Record<string, unknown>): ProductForm | null {
     ),
     status,
     featured: Boolean(raw.featured),
+    foodLicenseNumber: String(
+      raw.foodLicenseNumber || raw.fssaiNumber || raw.licenseNumber || "",
+    ).trim(), // ← add
     variants,
   };
 }
@@ -2326,6 +2331,7 @@ export default function ProductDetailPage() {
         imageUrl: form.imageUrl.trim(),
         status: form.status,
         featured: form.featured,
+        foodLicenseNumber: form.foodLicenseNumber.trim(),
         variants: preparedVariants,
       };
 
@@ -2507,6 +2513,22 @@ export default function ProductDetailPage() {
                 <option value="INACTIVE">INACTIVE</option>
                 <option value="DRAFT">DRAFT</option>
               </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                Food License Number
+              </label>
+              <input
+                type="text"
+                value={form.foodLicenseNumber}
+                onChange={(e) =>
+                  updateField("foodLicenseNumber", e.target.value)
+                }
+                disabled={!canManage}
+                placeholder="e.g. FSSAI / license number"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm disabled:bg-slate-50"
+              />
             </div>
 
             <div className="md:col-span-2">

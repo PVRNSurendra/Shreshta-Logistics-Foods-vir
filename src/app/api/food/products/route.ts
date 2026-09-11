@@ -731,6 +731,7 @@ export async function POST(request: NextRequest) {
         "/images/default-product-placeholder.png",
       status,
       featured: Boolean(body.featured),
+      foodLicenseNumber: String(body.foodLicenseNumber || "").trim() || null, // ← add
       variants,
       createdAt: now,
       updatedAt: now,
@@ -897,6 +898,7 @@ export async function PUT(request: NextRequest) {
         "/images/default-product-placeholder.png",
       status,
       featured: Boolean(body.featured),
+      foodLicenseNumber: String(body.foodLicenseNumber || "").trim() || null, // ← add
       variants,
       updatedAt: new Date().toISOString(),
     };

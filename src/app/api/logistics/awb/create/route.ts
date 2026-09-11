@@ -5353,7 +5353,31 @@ async function upsertSenderFromShipper(
     }
   }
 
-  const payload = {
+  // const payload = {
+  //   name: name || companyName || "Shipper",
+  //   companyName,
+  //   contactName: str(shipper.contactName) || name || null,
+  //   phone: phone || "0000000000",
+  //   mobile: str(shipper.mobile) || null,
+  //   email: str(shipper.email) || null,
+  //   address: partyAddress(shipper) || null,
+  //   addressLine1: str(shipper.addressLine1) || partyAddress(shipper) || null,
+  //   addressLine2: str(shipper.addressLine2) || null,
+  //   city: str(shipper.city) || null,
+  //   state: str(shipper.state) || null,
+  //   postalCode: str(shipper.pincode || shipper.postalCode) || null,
+  //   gstin,
+  //   iecNo: str(shipper.iecNo) || null,
+  //   documentType: str(shipper.documentType) || null,
+  //   documentNo: str(shipper.documentNo) || null,
+  //   country: str(shipper.country, "India") || null,
+  //   origin: str(shipper.origin) || null,
+  //   updatedAt: now,
+  //   updatedBy: userId,
+  //   status: "ACTIVE" as const,
+  // };
+
+    const payload = {
     name: name || companyName || "Shipper",
     companyName,
     contactName: str(shipper.contactName) || name || null,
@@ -5370,6 +5394,7 @@ async function upsertSenderFromShipper(
     iecNo: str(shipper.iecNo) || null,
     documentType: str(shipper.documentType) || null,
     documentNo: str(shipper.documentNo) || null,
+    documentUrl: str(shipper.documentUrl) || null, // ← add
     country: str(shipper.country, "India") || null,
     origin: str(shipper.origin) || null,
     updatedAt: now,

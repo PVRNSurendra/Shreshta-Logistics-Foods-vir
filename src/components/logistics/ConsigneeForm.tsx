@@ -2027,7 +2027,7 @@ export default function ConsigneeForm({
           />
         </div>
         <div>
-          <label className={label}>IEC No.</label>
+          <label className={label}>IEC No.<span className="text-red-500">*</span></label>
           <input
             value={value.iecNo ?? ""}
             onChange={(e) => update("iecNo", e.target.value)}
@@ -2040,7 +2040,7 @@ export default function ConsigneeForm({
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className={label}>Document Type</label>
+          <label className={label}>Document Type<span className="text-red-500">*</span></label>
           <select
             value={value.documentType ?? ""}
             onChange={(e) => update("documentType", e.target.value)}
@@ -2055,7 +2055,7 @@ export default function ConsigneeForm({
           </select>
         </div>
         <div>
-          <label className={label}>Document No.</label>
+          <label className={label}>Document No.<span className="text-red-500">*</span></label>
           <input
             value={value.documentNo ?? ""}
             onChange={(e) => update("documentNo", e.target.value)}

@@ -45484,6 +45484,7 @@ type SenderOption = {
   iecNo?: string;
   documentType?: string;
   documentNo?: string;
+  documentUrl?: string;
 };
 
 type ReceiverOption = {
@@ -45965,6 +45966,7 @@ const defaultShipper: ShipperFormData = {
   iecNo: "",
   documentType: "",
   documentNo: "",
+  documentUrl: "",
   origin: "",
   originCode: "",
   senderId: "",
@@ -46207,6 +46209,7 @@ function mapSenderToShipper(s: SenderOption): ShipperFormData {
     iecNo: String(s.iecNo || "").trim(),
     documentType: String(s.documentType || "").trim(),
     documentNo: String(s.documentNo || "").trim(),
+    documentUrl: String((s as { documentUrl?: string }).documentUrl || "").trim(),
     origin: "",
     originCode: "",
   };
@@ -46583,6 +46586,7 @@ export default function AWBBookingForm({
             iecNo: String(row.iecNo || "").trim() || undefined,
             documentType: String(row.documentType || "").trim() || undefined,
             documentNo: String(row.documentNo || "").trim() || undefined,
+            documentUrl: String(row.documentUrl || "").trim() || undefined,
           });
         }
         setSenders(mapped);
@@ -47554,6 +47558,9 @@ useEffect(() => {
       requireTrim(c.state, "Consignee state");
       requireTrim(c.pincode, "Consignee pincode");
       requireTrim(c.country, "Consignee country");
+      requireTrim(c.iecNo, "Consignee IEC No.");
+      requireTrim(c.documentType, "Consignee document type");
+      requireTrim(c.documentNo, "Consignee document number");
       // Optional on receiver master: phone, addressLine2, gstin, iec, document
 
       // Services

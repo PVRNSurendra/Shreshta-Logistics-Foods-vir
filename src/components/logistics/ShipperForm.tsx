@@ -3017,7 +3017,394 @@
 //   );
 // }
 
+// "use client";
+
+// export type ShipperFormData = {
+//   senderId?: string;
+//   name: string;
+//   company?: string;
+//   contactName?: string;
+//   phone: string;
+//   mobile?: string;
+//   email?: string;
+//   addressLine1: string;
+//   addressLine2?: string;
+//   city: string;
+//   state?: string;
+//   pincode: string;
+//   country: string;
+//   gstin?: string;
+//   iecNo?: string;
+//   documentType?: string;
+//   documentNo?: string;
+//   origin?: string;
+//   originCode?: string;
+// };
+
+// export type ShipperSenderOption = {
+//   id: string;
+//   senderId: string;
+//   name: string;
+//   companyName?: string;
+//   phone?: string;
+// };
+
+// export type ShipperOriginOption = {
+//   id: string;
+//   name: string;
+//   code?: string;
+// };
+
+// type ShipperFormProps = {
+//   value: ShipperFormData;
+//   onChange: (value: ShipperFormData) => void;
+//   disabled?: boolean;
+//   senders?: ShipperSenderOption[];
+//   selectedSenderId?: string;
+//   onSelectSender?: (id: string) => void;
+//   lockFieldsFromSender?: boolean;
+//   origins?: ShipperOriginOption[];
+// };
+
+// const DOCUMENT_TYPES = [
+//   { value: "", label: "Select" },
+//   { value: "AADHAAR", label: "Aadhaar Number" },
+//   { value: "GSTIN (Normal)", label: "GSTIN (Normal)" },
+//   { value: "PAN", label: "PAN Number" },
+//   { value: "PASSPORT", label: "Passport Number" },
+//   { value: "TAN", label: "TAN Number" },
+//   { value: "VOTER_ID", label: "Voter Id" },
+// ];
+
+// export default function ShipperForm({
+//   value,
+//   onChange,
+//   disabled = false,
+//   senders = [],
+//   selectedSenderId = "",
+//   onSelectSender,
+//   lockFieldsFromSender = true,
+//   origins = [],
+// }: ShipperFormProps) {
+//   const update = <K extends keyof ShipperFormData>(
+//     field: K,
+//     fieldValue: ShipperFormData[K],
+//   ) => {
+//     onChange({ ...value, [field]: fieldValue });
+//   };
+
+//   const input =
+//     "h-9 w-full rounded border border-gray-300 bg-white px-2.5 text-sm outline-none focus:border-slate-600 disabled:bg-gray-50 disabled:text-gray-600";
+//   const label = "mb-1 block text-xs font-medium text-gray-600";
+//   const fieldsLocked = Boolean(lockFieldsFromSender && selectedSenderId);
+
+//   function onOriginChange(name: string) {
+//     const o = origins.find(
+//       (x) => x.name === name || x.id === name || x.code === name,
+//     );
+//     onChange({
+//       ...value,
+//       origin: o?.name || name,
+//       originCode: o?.code || "",
+//     });
+//   }
+
+//   return (
+//     <div className="space-y-3">
+//       <div className="grid gap-3 sm:grid-cols-2">
+//         <div>
+//           <label className={label}>
+//             Origin <span className="text-red-500">*</span>
+//           </label>
+//           {origins.length > 0 ? (
+//             <select
+//               value={value.origin || ""}
+//               onChange={(e) => onOriginChange(e.target.value)}
+//               disabled={disabled}
+//               required
+//               className={input}
+//             >
+//               <option value="">Select origin</option>
+//               {origins.map((o) => (
+//                 <option key={o.id || o.name} value={o.name}>
+//                   {o.name}
+//                   {o.code ? ` (${o.code})` : ""}
+//                 </option>
+//               ))}
+//             </select>
+//           ) : (
+//             <input
+//               value={value.origin || ""}
+//               onChange={(e) => update("origin", e.target.value)}
+//               placeholder="e.g. Guntur"
+//               disabled={disabled}
+//               required
+//               className={input}
+//             />
+//           )}
+//           {origins.length === 0 ? (
+//             <p className="mt-1 text-[11px] text-amber-700">
+//               No origins in master. Add under Masters → Origins.
+//             </p>
+//           ) : null}
+//         </div>
+//         <div>
+//           <label className={label}>Origin Code</label>
+//           <input
+//             value={value.originCode || ""}
+//             onChange={(e) => update("originCode", e.target.value)}
+//             placeholder="Auto from master"
+//             disabled={disabled || origins.length > 0}
+//             className={
+//               origins.length > 0 ? `${input} bg-gray-50 font-semibold` : input
+//             }
+//           />
+//         </div>
+//       </div>
+
+//       <div>
+//         <label className={label}>
+//           Select Sender <span className="text-red-500">*</span>
+//         </label>
+//         <select
+//           value={selectedSenderId}
+//           onChange={(e) => onSelectSender?.(e.target.value)}
+//           disabled={disabled}
+//           required
+//           className={input}
+//         >
+//           <option value="">— Select from Senders master —</option>
+//           {senders.map((s) => (
+//             <option key={s.id || s.senderId} value={s.senderId || s.id}>
+//               {s.companyName || s.name}
+//             </option>
+//           ))}
+//         </select>
+//         <p className="mt-1 text-[11px] text-slate-400">
+//           Choosing a sender fills shipper fields. Clear selection to empty the
+//           form.
+//         </p>
+//       </div>
+
+//       <div className="grid gap-3 sm:grid-cols-2">
+//         <div>
+//           <label className={label}>
+//             Company Name <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.company || ""}
+//             onChange={(e) => update("company", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//         <div>
+//           <label className={label}>
+//             Contact Name <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.contactName || value.name || ""}
+//             onChange={(e) => {
+//               update("contactName", e.target.value);
+//               update("name", e.target.value);
+//             }}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//       </div>
+
+//       <div>
+//         <label className={label}>
+//           GSTIN <span className="text-red-500">*</span>
+//         </label>
+//         <input
+//           value={value.gstin || ""}
+//           onChange={(e) => update("gstin", e.target.value.toUpperCase())}
+//           disabled={disabled || fieldsLocked}
+//           required
+//           className={input}
+//         />
+//       </div>
+
+//       <div>
+//         <label className={label}>
+//           Address 1 <span className="text-red-500">*</span>
+//         </label>
+//         <input
+//           value={value.addressLine1 || ""}
+//           onChange={(e) => update("addressLine1", e.target.value)}
+//           disabled={disabled || fieldsLocked}
+//           required
+//           className={input}
+//         />
+//       </div>
+
+//       <div>
+//         <label className={label}>
+//           Address 2 <span className="text-red-500">*</span>
+//         </label>
+//         <input
+//           value={value.addressLine2 || ""}
+//           onChange={(e) => update("addressLine2", e.target.value)}
+//           disabled={disabled || fieldsLocked}
+//           required
+//           className={input}
+//         />
+//       </div>
+
+//       <div className="grid gap-3 sm:grid-cols-2">
+//         <div>
+//           <label className={label}>
+//             City <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.city || ""}
+//             onChange={(e) => update("city", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//         <div>
+//           <label className={label}>
+//             Pincode <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.pincode || ""}
+//             onChange={(e) => update("pincode", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//       </div>
+
+//       <div className="grid gap-3 sm:grid-cols-2">
+//         <div>
+//           <label className={label}>
+//             State <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.state || ""}
+//             onChange={(e) => update("state", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//         <div>
+//           <label className={label}>
+//             Telephone <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.phone || ""}
+//             onChange={(e) => update("phone", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//       </div>
+
+//       <div className="grid gap-3 sm:grid-cols-2">
+//         <div>
+//           <label className={label}>
+//             Mobile No. <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.mobile || ""}
+//             onChange={(e) => update("mobile", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//         <div>
+//           <label className={label}>
+//             E-Mail <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             type="email"
+//             value={value.email || ""}
+//             onChange={(e) => update("email", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//       </div>
+
+//       <div className="grid gap-3 sm:grid-cols-2">
+//         <div>
+//           <label className={label}>
+//             Country <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.country || ""}
+//             onChange={(e) => update("country", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//         <div>
+//           <label className={label}>
+//             IEC No. <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.iecNo || ""}
+//             onChange={(e) => update("iecNo", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//       </div>
+
+//       <div className="grid gap-3 sm:grid-cols-2">
+//         <div>
+//           <label className={label}>
+//             Document Type <span className="text-red-500">*</span>
+//           </label>
+//           <select
+//             value={value.documentType || ""}
+//             onChange={(e) => update("documentType", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           >
+//             {DOCUMENT_TYPES.map((t) => (
+//               <option key={t.value || "empty"} value={t.value}>
+//                 {t.label}
+//               </option>
+//             ))}
+//           </select>
+//         </div>
+//         <div>
+//           <label className={label}>
+//             Document No. <span className="text-red-500">*</span>
+//           </label>
+//           <input
+//             value={value.documentNo || ""}
+//             onChange={(e) => update("documentNo", e.target.value)}
+//             disabled={disabled || fieldsLocked}
+//             required
+//             className={input}
+//           />
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
 "use client";
+
+import { useState } from "react";
+import { Loader2, Upload, FileText } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export type ShipperFormData = {
   senderId?: string;
@@ -3037,6 +3424,7 @@ export type ShipperFormData = {
   iecNo?: string;
   documentType?: string;
   documentNo?: string;
+  documentUrl?: string;
   origin?: string;
   originCode?: string;
 };
@@ -3086,6 +3474,10 @@ export default function ShipperForm({
   lockFieldsFromSender = true,
   origins = [],
 }: ShipperFormProps) {
+  const { firebaseUser } = useAuth();
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const update = <K extends keyof ShipperFormData>(
     field: K,
     fieldValue: ShipperFormData[K],
@@ -3107,6 +3499,64 @@ export default function ShipperForm({
       origin: o?.name || name,
       originCode: o?.code || "",
     });
+  }
+
+  async function handleDocumentUpload(file: File | null) {
+    if (!file || disabled) return;
+
+    const allowed = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+    ];
+    if (!allowed.includes(file.type)) {
+      setUploadError("Only JPG, PNG, WebP, or PDF allowed.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File must be 10 MB or smaller.");
+      return;
+    }
+    if (!firebaseUser) {
+      setUploadError("Authentication is required to upload.");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setUploadError(null);
+
+      const token = await firebaseUser.getIdToken(true);
+      const body = new FormData();
+      body.append("file", file);
+      body.append("context", "shipper-document");
+      body.append("ownerId", firebaseUser.uid);
+
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json?.error?.message || "Failed to upload document.");
+      }
+
+      const url = String(
+        json.data?.downloadUrl || json.data?.url || "",
+      ).trim();
+      if (!url) throw new Error("Upload succeeded but no URL returned.");
+
+      update("documentUrl", url);
+    } catch (e) {
+      setUploadError(
+        e instanceof Error ? e.message : "Failed to upload document.",
+      );
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -3206,8 +3656,11 @@ export default function ShipperForm({
           <input
             value={value.contactName || value.name || ""}
             onChange={(e) => {
-              update("contactName", e.target.value);
-              update("name", e.target.value);
+              onChange({
+                ...value,
+                contactName: e.target.value,
+                name: e.target.value,
+              });
             }}
             disabled={disabled || fieldsLocked}
             required
@@ -3394,6 +3847,56 @@ export default function ShipperForm({
             required
             className={input}
           />
+        </div>
+      </div>
+
+      {/* Same upload UI as Consignee */}
+      <div>
+        <label className={label}>Document file (image / PDF)</label>
+        <div className="flex flex-col gap-2">
+          <label
+            className={[
+              "flex h-9 cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-gray-300 bg-white px-2 text-xs font-medium text-slate-700 hover:bg-slate-50",
+              disabled || uploading ? "pointer-events-none opacity-60" : "",
+            ].join(" ")}
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Uploading…
+              </>
+            ) : (
+              <>
+                <Upload className="h-3.5 w-3.5" />
+                Upload image or PDF
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              className="hidden"
+              disabled={disabled || uploading}
+              onChange={(e) =>
+                handleDocumentUpload(e.target.files?.[0] ?? null)
+              }
+            />
+          </label>
+
+          {value.documentUrl ? (
+            <a
+              href={value.documentUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#087f87] hover:underline"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              View uploaded document
+            </a>
+          ) : null}
+
+          {uploadError ? (
+            <p className="text-xs text-red-600">{uploadError}</p>
+          ) : null}
         </div>
       </div>
     </div>

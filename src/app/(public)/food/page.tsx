@@ -1384,7 +1384,7 @@ function Header() {
         <nav style={{ display: "flex", gap: 25 }}>
           <Link href="/food">Home</Link>
           <Link href="/food/products">Products</Link>
-          <Link href="/food/categories/dry-fruits">Categories</Link>
+          <Link href="/food/categories">Categories</Link>
         </nav>
 
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>

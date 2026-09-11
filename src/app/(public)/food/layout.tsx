@@ -376,9 +376,9 @@ export default function FoodPublicLayout({
           <span>
             © {new Date().getFullYear()} Sreshta Foods. All rights reserved.
           </span>
-          <span style={{ color: "#78716c" }}>
+          {/* <span style={{ color: "#78716c" }}>
             FSSAI: <strong style={{ color: "#451a03" }}>20126141001875</strong>
-          </span>
+          </span> */}
         </div>
       </footer>
     </>

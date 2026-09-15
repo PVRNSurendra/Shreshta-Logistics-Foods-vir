@@ -35,6 +35,13 @@ export type PricingBreakdown = {
   total: number;
 };
 
+export type CarrierRateSlab = {
+  weightFrom: number;
+  weightTo: number;
+  rateType: "FLAT" | "PER_KG";
+  price: number;
+};
+
 function amount(
   value: number | undefined,
 ): number {
@@ -271,4 +278,24 @@ export function calculateFreightRate(
     total,
     currency: "INR",
   };
+}
+
+export function freightFromWeightSlab(
+  chargeableWeightKg: number,
+  slabs: CarrierRateSlab[],
+): number {
+  const w = Math.max(0, Number(chargeableWeightKg) || 0);
+  if (w <= 0 || !slabs.length) return 0;
+
+  const hit =
+    slabs.find((s) => w >= s.weightFrom && w <= s.weightTo) ||
+    [...slabs]
+      .filter((s) => s.weightFrom <= w)
+      .sort((a, b) => b.weightFrom - a.weightFrom)[0];
+
+  if (!hit) return 0;
+  if (hit.rateType === "PER_KG") {
+    return Math.round((hit.price * w + Number.EPSILON) * 100) / 100;
+  }
+  return Math.round((hit.price + Number.EPSILON) * 100) / 100;
 }

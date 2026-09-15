@@ -694,6 +694,7 @@ type CouponRecord = {
   createdAt: string;
   updatedAt: string;
 };
+export const dynamic = "force-dynamic";
 
 function normalizeCoupon(id: string, data: DocumentData): CouponRecord {
   const typeRaw = String(data.type || "PERCENTAGE").toUpperCase();
@@ -897,6 +898,69 @@ export async function POST(request: NextRequest) {
     return errorResponse(
       "COUPON_CREATE_FAILED",
       error instanceof Error ? error.message : "Unable to create coupon.",
+      500,
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getCurrentUser(request);
+
+    if (!user) {
+      return errorResponse(
+        "UNAUTHENTICATED",
+        "Authentication is required.",
+        401,
+      );
+    }
+
+    if (!canManageCoupons(user)) {
+      return errorResponse(
+        "FORBIDDEN",
+        "You do not have permission to delete coupons.",
+        403,
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const couponId = String(
+      searchParams.get("couponId") || searchParams.get("id") || "",
+    ).trim();
+
+    if (!couponId) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        "couponId query param is required.",
+        400,
+      );
+    }
+
+    const ref = adminDb.collection(FIRESTORE_COLLECTIONS.COUPONS).doc(couponId);
+    const existing = await ref.get();
+
+    if (!existing.exists) {
+      return errorResponse("NOT_FOUND", "Coupon not found.", 404);
+    }
+
+    const data = existing.data() || {};
+    await ref.delete();
+
+    await writeAuditLog({
+      userId: user.userId,
+      action: "FOOD_COUPON_DELETED",
+      module: "FOOD",
+      resourceType: "COUPON",
+      resourceId: couponId,
+      metadata: { code: data.code || null },
+    });
+
+    return successResponse({ couponId }, 200, "Coupon deleted.");
+  } catch (error) {
+    console.error("DELETE /api/food/coupons", error);
+    return errorResponse(
+      "COUPON_DELETE_FAILED",
+      error instanceof Error ? error.message : "Unable to delete coupon.",
       500,
     );
   }

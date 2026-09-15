@@ -45547,6 +45547,19 @@ type CurrencyOption = {
   enabled: boolean;
 };
 
+type CarrierRateRow = {
+  id: string;
+  vendorName: string;
+  vendorCode: string;
+  country: string;
+  countryCode: string;
+  weightFrom: number;
+  weightTo: number;
+  rateType: "FLAT" | "PER_KG";
+  price: number;
+  enabled: boolean;
+};
+
 const today = new Date().toISOString().split("T")[0];
 
 const FLAG_CHARGE_AMOUNTS = {
@@ -45623,12 +45636,219 @@ function extractList(data: unknown): Record<string, unknown>[] {
     "vendors",
     "currencies",
     "origins",
+    "carrierRates",
+    "rates",
     "rows",
     "data",
   ]) {
     if (Array.isArray(obj[key])) return obj[key] as Record<string, unknown>[];
   }
   return [];
+}
+
+// function matchCarrierRateClient(
+//   rates: CarrierRateRow[],
+//   opts: {
+//     vendorName?: string;
+//     vendorCode?: string;
+//     country?: string;
+//     weightKg: number;
+//   },
+// ): CarrierRateRow | null {
+//   const weight = Math.max(0, Number(opts.weightKg) || 0);
+//   if (weight <= 0) return null;
+
+//   const vendorKey = String(opts.vendorName || opts.vendorCode || "")
+//     .trim()
+//     .toUpperCase();
+//   const countryKey = String(opts.country || "").trim().toUpperCase();
+
+//   const pool = rates.filter((r) => {
+//     if (r.enabled === false) return false;
+//     const vOk =
+//       !vendorKey ||
+//       r.vendorName.toUpperCase() === vendorKey ||
+//       r.vendorCode.toUpperCase() === vendorKey ||
+//       r.vendorName.toUpperCase().startsWith(vendorKey) ||
+//       (vendorKey && r.vendorName.toUpperCase().includes(vendorKey));
+//     const cOk =
+//       !countryKey ||
+//       r.country.toUpperCase() === countryKey ||
+//       r.countryCode.toUpperCase() === countryKey ||
+//       r.country.toUpperCase().includes(countryKey);
+//     return vOk && cOk;
+//   });
+
+//   const containing = pool
+//     .filter((r) => weight >= r.weightFrom && weight <= r.weightTo)
+//     .sort(
+//       (a, b) =>
+//         a.weightTo - a.weightFrom - (b.weightTo - b.weightFrom) ||
+//         a.weightFrom - b.weightFrom,
+//     );
+//   if (containing.length > 0) return containing[0]!;
+
+//   const below = pool
+//     .filter((r) => r.weightFrom <= weight)
+//     .sort((a, b) => b.weightFrom - a.weightFrom);
+//   return below[0] ?? null;
+// }
+
+// function computeFreightFromRateClient(
+//   rate: CarrierRateRow,
+//   chargeableWeightKg: number,
+// ): number {
+//   const w = Math.max(0, Number(chargeableWeightKg) || 0);
+//   if (rate.rateType === "PER_KG") {
+//     return Math.round((rate.price * w + Number.EPSILON) * 100) / 100;
+//   }
+//   return Math.round((rate.price + Number.EPSILON) * 100) / 100;
+// }
+
+// function matchCarrierRateClient(
+//   rates: CarrierRateRow[],
+//   opts: {
+//     vendorName?: string;
+//     vendorCode?: string;
+//     country?: string;
+//     weightKg: number;
+//   },
+// ): CarrierRateRow | null {
+//   const weight = Math.max(0, Number(opts.weightKg) || 0);
+//   if (weight <= 0) return null;
+
+//   const vendorKey = String(opts.vendorName || opts.vendorCode || "")
+//     .trim()
+//     .toUpperCase();
+//   const countryKey = String(opts.country || "").trim().toUpperCase();
+
+//   const pool = rates.filter((r) => {
+//     if (r.enabled === false) return false;
+
+//     const vOk =
+//       !vendorKey ||
+//       r.vendorName.toUpperCase() === vendorKey ||
+//       r.vendorCode.toUpperCase() === vendorKey ||
+//       r.vendorName.toUpperCase().startsWith(vendorKey) ||
+//       (vendorKey.length > 0 && r.vendorName.toUpperCase().includes(vendorKey));
+
+//     const cOk =
+//       !countryKey ||
+//       r.country.toUpperCase() === countryKey ||
+//       r.countryCode.toUpperCase() === countryKey ||
+//       r.country.toUpperCase().includes(countryKey);
+
+//     return vOk && cOk;
+//   });
+
+//   const containing = pool
+//     .filter((r) => weight >= r.weightFrom && weight <= r.weightTo)
+//     .sort(
+//       (a, b) =>
+//         a.weightTo - a.weightFrom - (b.weightTo - b.weightFrom) ||
+//         a.weightFrom - b.weightFrom,
+//     );
+
+//   if (containing.length > 0) return containing[0]!;
+
+//   const below = pool
+//     .filter((r) => r.weightFrom <= weight)
+//     .sort((a, b) => b.weightFrom - a.weightFrom);
+
+//   return below[0] ?? null;
+// }
+
+// function computeFreightFromRateClient(
+//   rate: CarrierRateRow,
+//   chargeableWeightKg: number,
+// ): number {
+//   const w = Math.max(0, Number(chargeableWeightKg) || 0);
+//   if (rate.rateType === "PER_KG") {
+//     return Math.round((rate.price * w + Number.EPSILON) * 100) / 100;
+//   }
+//   return Math.round((rate.price + Number.EPSILON) * 100) / 100;
+// }
+
+function cleanVendorKey(value?: string): string {
+  return String(value || "")
+    .split(" (")[0]
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function matchCarrierRateClient(
+  rates: CarrierRateRow[],
+  opts: {
+    vendorName?: string;
+    vendorCode?: string;
+    country?: string;
+    weightKg: number;
+  },
+): CarrierRateRow | null {
+  const weight = Math.max(0, Number(opts.weightKg) || 0);
+  if (weight <= 0) return null;
+
+  const vendorKey = cleanVendorKey(opts.vendorName || opts.vendorCode);
+  const countryKey = String(opts.country || "")
+    .trim()
+    .toUpperCase();
+
+  const pool = rates.filter((r) => {
+    if (r.enabled === false) return false;
+
+    const rateVendor = cleanVendorKey(r.vendorName || r.vendorCode);
+    const vOk =
+      !vendorKey ||
+      rateVendor === vendorKey ||
+      rateVendor.startsWith(vendorKey) ||
+      vendorKey.startsWith(rateVendor) ||
+      String(r.vendorName || "")
+        .toUpperCase()
+        .includes(vendorKey) ||
+      String(r.vendorCode || "")
+        .toUpperCase()
+        .includes(vendorKey);
+
+    const rateCountry = String(r.country || "").toUpperCase();
+    const rateCode = String(r.countryCode || "").toUpperCase();
+    const cOk =
+      !countryKey ||
+      rateCountry === countryKey ||
+      rateCode === countryKey ||
+      rateCountry.includes(countryKey) ||
+      countryKey.includes(rateCountry) ||
+      (rateCode.length > 0 && countryKey.includes(rateCode));
+
+    return vOk && cOk;
+  });
+
+  const containing = pool
+    .filter((r) => weight >= r.weightFrom && weight <= r.weightTo)
+    .sort(
+      (a, b) =>
+        a.weightTo - a.weightFrom - (b.weightTo - b.weightFrom) ||
+        a.weightFrom - b.weightFrom,
+    );
+
+  if (containing.length > 0) return containing[0]!;
+
+  const below = pool
+    .filter((r) => r.weightFrom <= weight)
+    .sort((a, b) => b.weightFrom - a.weightFrom);
+
+  return below[0] ?? null;
+}
+
+function computeFreightFromRateClient(
+  rate: CarrierRateRow,
+  chargeableWeightKg: number,
+): number {
+  const w = Math.max(0, Number(chargeableWeightKg) || 0);
+  if (rate.rateType === "PER_KG") {
+    return Math.round((rate.price * w + Number.EPSILON) * 100) / 100;
+  }
+  return Math.round((rate.price + Number.EPSILON) * 100) / 100;
 }
 
 function findFuelVendor(
@@ -46282,6 +46502,7 @@ export default function AWBBookingForm({
   const [selectedReceiverId, setSelectedReceiverId] = useState("");
   const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
   const [origins, setOrigins] = useState<OriginOption[]>([]);
+  const [carrierRates, setCarrierRates] = useState<CarrierRateRow[]>([]);
   
     const selectedCurrency = useMemo(() => {
     const code = String(data.currency || "INR").toUpperCase();
@@ -46420,6 +46641,7 @@ export default function AWBBookingForm({
     cancelled = true;
   };
 }, [firebaseUser]);
+
 
 
 
@@ -46658,6 +46880,8 @@ export default function AWBBookingForm({
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, [firebaseUser]);
 
+
+
 useEffect(() => {
   let cancelled = false;
 
@@ -46707,6 +46931,7 @@ useEffect(() => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [firebaseUser]);
+
   useEffect(() => {
     let cancelled = false;
     async function loadReceivers() {
@@ -47065,71 +47290,71 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.vendor, selectedVendor?.id]);
 
-    useEffect(() => {
-    let cancelled = false;
+//     useEffect(() => {
+//     let cancelled = false;
 
-    async function loadOrigins() {
-      try {
-        const headers = await authHeaders();
+//     async function loadOrigins() {
+//       try {
+//         const headers = await authHeaders();
 
-        const res = await fetch("/api/logistics/origins", {
-          method: "GET",
-          headers,
-          credentials: "include",
-          cache: "no-store",
-        });
+//         const res = await fetch("/api/logistics/origins", {
+//           method: "GET",
+//           headers,
+//           credentials: "include",
+//           cache: "no-store",
+//         });
 
-        const json = await res.json();
+//         const json = await res.json();
 
-        if (!res.ok || !json?.success || cancelled) {
-          console.error("Failed to load origins:", json);
-          return;
-        }
+//         if (!res.ok || !json?.success || cancelled) {
+//           console.error("Failed to load origins:", json);
+//           return;
+//         }
 
-        const list = extractList(json.data);
+//         const list = extractList(json.data);
 
-        if (cancelled) return;
+//         if (cancelled) return;
 
-        const mapped: OriginOption[] = [];
+//         const mapped: OriginOption[] = [];
 
-        for (const row of list) {
-          const id = String(row.id || row.originId || "").trim();
-          const name = String(row.name || "").trim();
-          const code = String(row.code || "")
-            .trim()
-            .toUpperCase();
+//         for (const row of list) {
+//           const id = String(row.id || row.originId || "").trim();
+//           const name = String(row.name || "").trim();
+//           const code = String(row.code || "")
+//             .trim()
+//             .toUpperCase();
 
-          const status = String(row.status || "ACTIVE").toUpperCase();
-          const enabled =
-            row.enabled === undefined
-              ? status !== "INACTIVE"
-              : Boolean(row.enabled);
+//           const status = String(row.status || "ACTIVE").toUpperCase();
+//           const enabled =
+//             row.enabled === undefined
+//               ? status !== "INACTIVE"
+//               : Boolean(row.enabled);
 
-          if (!name || !enabled) continue;
+//           if (!name || !enabled) continue;
 
-          mapped.push({
-            id: id || name,
-            name,
-            code: code || undefined,
-          });
-        }
+//           mapped.push({
+//             id: id || name,
+//             name,
+//             code: code || undefined,
+//           });
+//         }
 
-        setOrigins(mapped);
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to load origins:", error);
-          setOrigins([]);
-        }
-      }
-    }
+//         setOrigins(mapped);
+//       } catch (error) {
+//         if (!cancelled) {
+//           console.error("Failed to load origins:", error);
+//           setOrigins([]);
+//         }
+//       }
+//     }
 
-    loadOrigins();
+//     loadOrigins();
 
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firebaseUser]);
+//     return () => {
+//       cancelled = true;
+//     };
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [firebaseUser]);
 
   // Recalc fuel + tax when freight / extras change
   useEffect(() => {
@@ -47207,7 +47432,61 @@ useEffect(() => {
 
   const divisionEditable = false;
 
-    const derived = useMemo(() => {
+//     const derived = useMemo(() => {
+//     const pieces = Array.isArray(data.pieces) ? data.pieces : [];
+//     let actual = 0;
+//     let volumetric = 0;
+
+//     for (const p of pieces) {
+//       const row = p as Record<string, unknown>;
+
+//       const w = Number(
+//         row.weight ?? row.actualWeight ?? row.wt ?? 0,
+//       );
+//       const l = Number(
+//         row.length ?? row.l ?? row.L ?? 0,
+//       );
+//       const b = Number(
+//         row.breadth ?? row.width ?? row.b ?? row.B ?? 0,
+//       );
+//       const h = Number(
+//         row.height ?? row.h ?? row.H ?? 0,
+//       );
+//       const qty = Math.max(1, Number(row.quantity ?? row.qty ?? 1));
+//       const div =
+//         Number(row.division ?? volumetricDivisor) || volumetricDivisor;
+
+//       actual += (Number.isFinite(w) ? w : 0) * qty;
+
+//       if (
+//         Number.isFinite(l) &&
+//         l > 0 &&
+//         Number.isFinite(b) &&
+//         b > 0 &&
+//         Number.isFinite(h) &&
+//         h > 0 &&
+//         div > 0
+//       ) {
+//         volumetric += ((l * b * h) / div) * qty;
+//       }
+//     }
+
+//     actual = Number(actual.toFixed(3));
+//     volumetric = Number(volumetric.toFixed(3));
+//     const chargeable = Math.max(actual, volumetric);
+
+//     return {
+//       totalPieces: pieces.reduce((sum, p) => {
+//         const row = p as Record<string, unknown>;
+//         return sum + Math.max(1, Number(row.quantity ?? row.qty ?? 1));
+//       }, 0),
+//       actualWeight: actual,
+//       volumetricWeight: volumetric,
+//       chargeableWeight: Number(chargeable.toFixed(3)),
+//     };
+//   }, [data.pieces, volumetricDivisor]);
+
+const derived = useMemo(() => {
     const pieces = Array.isArray(data.pieces) ? data.pieces : [];
     let actual = 0;
     let volumetric = 0;
@@ -47215,21 +47494,30 @@ useEffect(() => {
     for (const p of pieces) {
       const row = p as Record<string, unknown>;
 
+      // PieceDetails uses weightKg / lengthCm / widthCm / heightCm
       const w = Number(
-        row.weight ?? row.actualWeight ?? row.wt ?? 0,
+        row.weightKg ?? row.weight ?? row.actualWeight ?? row.wt ?? 0,
       );
       const l = Number(
-        row.length ?? row.l ?? row.L ?? 0,
+        row.lengthCm ?? row.length ?? row.l ?? row.L ?? 0,
       );
       const b = Number(
-        row.breadth ?? row.width ?? row.b ?? row.B ?? 0,
+        row.widthCm ?? row.breadth ?? row.width ?? row.b ?? row.B ?? 0,
       );
       const h = Number(
-        row.height ?? row.h ?? row.H ?? 0,
+        row.heightCm ?? row.height ?? row.h ?? row.H ?? 0,
       );
       const qty = Math.max(1, Number(row.quantity ?? row.qty ?? 1));
       const div =
         Number(row.division ?? volumetricDivisor) || volumetricDivisor;
+
+      // Prefer piece.chargeableWeight if already computed by PieceDetails
+      const pieceChargeable = Number(row.chargeableWeight);
+      if (Number.isFinite(pieceChargeable) && pieceChargeable > 0) {
+        actual += Number(row.weightKg ?? w) * qty;
+        volumetric += Number(row.volumetricWeight ?? 0);
+        continue;
+      }
 
       actual += (Number.isFinite(w) ? w : 0) * qty;
 
@@ -47246,9 +47534,18 @@ useEffect(() => {
       }
     }
 
+    // Prefer summing piece chargeable weights when present
+    const sumChargeable = pieces.reduce((sum, p) => {
+      const ch = Number((p as Record<string, unknown>).chargeableWeight);
+      return sum + (Number.isFinite(ch) ? ch : 0);
+    }, 0);
+
     actual = Number(actual.toFixed(3));
     volumetric = Number(volumetric.toFixed(3));
-    const chargeable = Math.max(actual, volumetric);
+    const chargeable =
+      sumChargeable > 0
+        ? Number(sumChargeable.toFixed(3))
+        : Number(Math.max(actual, volumetric).toFixed(3));
 
     return {
       totalPieces: pieces.reduce((sum, p) => {
@@ -47257,9 +47554,442 @@ useEffect(() => {
       }, 0),
       actualWeight: actual,
       volumetricWeight: volumetric,
-      chargeableWeight: Number(chargeable.toFixed(3)),
+      chargeableWeight: chargeable,
     };
   }, [data.pieces, volumetricDivisor]);
+
+  useEffect(() => {
+    const weight = Number(derived.chargeableWeight) || 0;
+    const country = String(data.consignee?.country || "").trim();
+    const vendorName = String(data.vendor || "").trim();
+
+    // Need all three inputs
+    if (weight <= 0 || !country || !vendorName || carrierRates.length === 0) {
+      return;
+    }
+
+    const matched = matchCarrierRateClient(carrierRates, {
+      vendorName,
+      vendorCode: masterVendors.find(
+        (v) => v.name === vendorName || v.code === vendorName,
+      )?.code,
+      country,
+      weightKg: weight,
+    });
+
+    if (!matched) {
+      // No slab found — leave freight as-is (admin can type)
+      return;
+    }
+
+    const freight = computeFreightFromRateClient(matched, weight);
+
+    setData((prev) => {
+      // Avoid loops if unchanged
+      if (Number(prev.charges.freight) === freight) return prev;
+
+      const nextCharges = {
+        ...prev.charges,
+        freight,
+      };
+
+      // Fuel + tax follow new freight (same as your existing vendor logic)
+      const fuelVendor = findFuelVendor(fuelVendors, prev.vendor)
+        || findFuelVendor(
+          fuelVendors,
+          (prev.vendor || "").split(" (")[0] || prev.vendor,
+        );
+
+      // Prefer explicit fuel-surcharge row if vendor names align with fuel master
+      const fuel =
+        calcFuelSurcharge(
+          findFuelVendor(fuelVendors, prev.vendor) ||
+            fuelVendors.find(
+              (f) =>
+                cleanVendorKey(f.name) === cleanVendorKey(prev.vendor) ||
+                cleanVendorKey(f.code) === cleanVendorKey(prev.vendor),
+            ),
+          freight,
+        );
+
+      const tax = calcTaxFromVendor(
+        findFuelVendor(fuelVendors, prev.vendor) ||
+          fuelVendors.find(
+            (f) =>
+              cleanVendorKey(f.name) === cleanVendorKey(prev.vendor) ||
+              cleanVendorKey(f.code) === cleanVendorKey(prev.vendor),
+          ),
+        freight,
+        fuel,
+        Number(nextCharges.contractCharges) || 0,
+        Number(nextCharges.otherCharges) || 0,
+        Number(nextCharges.discount) || 0,
+      );
+
+      return {
+        ...prev,
+        charges: {
+          ...nextCharges,
+          fuelSurcharge: fuel,
+          cgst: tax.cgst,
+          sgst: tax.sgst,
+          igst: tax.igst,
+        },
+      };
+    });
+  }, [
+    derived.chargeableWeight,
+    data.consignee?.country,
+    data.vendor,
+    carrierRates,
+    fuelVendors,
+    masterVendors,
+  ]);
+  
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAndApplyFreight() {
+      const rawVendor =
+        selectedVendor?.name ||
+        selectedVendor?.code ||
+        data.vendor ||
+        "";
+      const vendorKey = cleanVendorKey(rawVendor);
+
+      const countryKey = String(
+        data.consignee?.country ||
+          data.destination ||
+          data.destinationCode ||
+          "",
+      ).trim();
+
+      const weight = Number(derived.chargeableWeight) || 0;
+
+      if (!vendorKey || !countryKey || weight <= 0) return;
+
+      try {
+        const headers = await authHeaders();
+        const qs = new URLSearchParams({
+          vendor: vendorKey,
+          country: countryKey,
+          enabled: "true",
+        });
+
+        const res = await fetch(
+          `/api/logistics/carrier-rates?${qs.toString()}`,
+          {
+            method: "GET",
+            headers,
+            credentials: "include",
+            cache: "no-store",
+          },
+        );
+
+        const json = await res.json();
+        if (!res.ok || !json?.success || cancelled) return;
+
+        const list: CarrierRateRow[] = Array.isArray(json.data)
+          ? (json.data as CarrierRateRow[])
+          : Array.isArray(json.data?.items)
+            ? (json.data.items as CarrierRateRow[])
+            : Array.isArray(json.data?.rows)
+              ? (json.data.rows as CarrierRateRow[])
+              : [];
+
+        if (!list.length) return;
+
+        const matched = matchCarrierRateClient(list, {
+          vendorName: data.vendor || vendorKey,
+          vendorCode: selectedVendor?.code || vendorKey,
+          country: countryKey,
+          weightKg: weight,
+        });
+
+        if (!matched || cancelled) return;
+
+        const freight = computeFreightFromRateClient(matched, weight);
+        if (!Number.isFinite(freight) || freight < 0) return;
+
+        setData((prev) => {
+          if (Number(prev.charges.freight) === freight) return prev;
+
+          const fuel = calcFuelSurcharge(selectedVendor, freight);
+          const tax = calcTaxFromVendor(
+            selectedVendor,
+            freight,
+            fuel,
+            prev.charges.contractCharges,
+            prev.charges.otherCharges,
+            prev.charges.discount,
+          );
+
+          return {
+            ...prev,
+            charges: {
+              ...prev.charges,
+              freight,
+              fuelSurcharge: fuel,
+              cgst: tax.cgst,
+              sgst: tax.sgst,
+              igst: tax.igst,
+            },
+          };
+        });
+      } catch {
+        /* keep freight */
+      }
+    }
+
+    loadAndApplyFreight();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    data.vendor,
+    selectedVendor,
+    data.consignee?.country,
+    data.destination,
+    data.destinationCode,
+    derived.chargeableWeight,
+  ]);
+
+      // Auto-fill Freight from Masters → Carrier Rates
+  // when Fuel Surcharge (vendor) + Destination country + Chargeable weight are set
+//   useEffect(() => {
+//     let cancelled = false;
+
+//     async function loadAndApplyFreight() {
+//       const vendorKey = String(
+//         selectedVendor?.name || selectedVendor?.code || data.vendor || "",
+//       ).trim();
+
+//       const countryKey = String(
+//         data.consignee?.country ||
+//           data.destination ||
+//           data.destinationCode ||
+//           "",
+//       ).trim();
+
+//       const weight = Number(derived.chargeableWeight) || 0;
+
+//       if (!vendorKey || !countryKey || weight <= 0) {
+//         return;
+//       }
+
+//       try {
+//         const headers = await authHeaders();
+//         const qs = new URLSearchParams({
+//           vendor: vendorKey,
+//           country: countryKey,
+//           enabled: "true",
+//         });
+
+//         const res = await fetch(
+//           `/api/logistics/carrier-rates?${qs.toString()}`,
+//           {
+//             method: "GET",
+//             headers,
+//             credentials: "include",
+//             cache: "no-store",
+//           },
+//         );
+
+//         const json = await res.json();
+//         if (!res.ok || !json?.success || cancelled) return;
+
+//         const list: CarrierRateRow[] = Array.isArray(json.data)
+//           ? json.data
+//           : Array.isArray(json.data?.items)
+//             ? json.data.items
+//             : [];
+
+//         if (!list.length) return;
+
+//         const matched = matchCarrierRateClient(list, {
+//           vendorName: selectedVendor?.name || data.vendor,
+//           vendorCode: selectedVendor?.code || data.vendor,
+//           country: countryKey,
+//           weightKg: weight,
+//         });
+
+//         if (!matched || cancelled) return;
+
+//         const freight = computeFreightFromRateClient(matched, weight);
+
+//         setData((prev) => {
+//           const prevFreight = Number(prev.charges.freight) || 0;
+
+//           // Keep manual freight if user already entered a different value
+//           if (prevFreight > 0 && Math.abs(prevFreight - freight) > 0.01) {
+//             return prev;
+//           }
+//           if (prevFreight === freight) return prev;
+
+//           const fuel = calcFuelSurcharge(selectedVendor, freight);
+//           const tax = calcTaxFromVendor(
+//             selectedVendor,
+//             freight,
+//             fuel,
+//             prev.charges.contractCharges,
+//             prev.charges.otherCharges,
+//             prev.charges.discount,
+//           );
+
+//           return {
+//             ...prev,
+//             charges: {
+//               ...prev.charges,
+//               freight,
+//               fuelSurcharge: fuel,
+//               cgst: tax.cgst,
+//               sgst: tax.sgst,
+//               igst: tax.igst,
+//             },
+//           };
+//         });
+//       } catch {
+//         // leave freight as-is on network errors
+//       }
+//     }
+
+//     loadAndApplyFreight();
+
+//     return () => {
+//       cancelled = true;
+//     };
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [
+//     data.vendor,
+//     selectedVendor,
+//     data.consignee?.country,
+//     data.destination,
+//     data.destinationCode,
+//     derived.chargeableWeight,
+//   ]);
+
+  // Auto-fill Freight from Masters → Carrier Rates
+//   useEffect(() => {
+//     let cancelled = false;
+
+//     async function loadAndApplyFreight() {
+//       const rawVendor =
+//         selectedVendor?.name ||
+//         selectedVendor?.code ||
+//         data.vendor ||
+//         "";
+//       const vendorKey = cleanVendorKey(rawVendor);
+
+//       const countryKey = String(
+//         data.consignee?.country ||
+//           data.destination ||
+//           data.destinationCode ||
+//           "",
+//       ).trim();
+
+//     //   const weight = Number(derived.chargeableWeight) || 0;
+//     const weight =
+//   Number(
+//     // prefer derived total if present
+//     (derived as { chargeableWeight?: number })?.chargeableWeight ??
+//       data.chargeableWeight ??
+//       0,
+//   ) || 0;
+
+//       if (!vendorKey || !countryKey || weight <= 0) {
+//         return;
+//       }
+
+//       try {
+//         const headers = await authHeaders();
+//         const qs = new URLSearchParams({
+//           vendor: vendorKey, // "FEDEX" not "fedex (4.99%)"
+//           country: countryKey,
+//           enabled: "true",
+//         });
+
+//         const res = await fetch(
+//           `/api/logistics/carrier-rates?${qs.toString()}`,
+//           {
+//             method: "GET",
+//             headers,
+//             credentials: "include",
+//             cache: "no-store",
+//           },
+//         );
+
+//         const json = await res.json();
+//         if (!res.ok || !json?.success || cancelled) return;
+
+//         const list: CarrierRateRow[] = Array.isArray(json.data)
+//           ? (json.data as CarrierRateRow[])
+//           : Array.isArray(json.data?.items)
+//             ? (json.data.items as CarrierRateRow[])
+//             : Array.isArray(json.data?.rows)
+//               ? (json.data.rows as CarrierRateRow[])
+//               : [];
+
+//         if (!list.length) return;
+
+//         const matched = matchCarrierRateClient(list, {
+//           vendorName: vendorKey,
+//           vendorCode: selectedVendor?.code || vendorKey,
+//           country: countryKey,
+//           weightKg: weight,
+//         });
+
+//         if (!matched || cancelled) return;
+
+//         const freight = computeFreightFromRateClient(matched, weight);
+//         if (!Number.isFinite(freight) || freight < 0) return;
+
+//         setData((prev) => {
+//           if (Number(prev.charges.freight) === freight) return prev;
+
+//           const fuel = calcFuelSurcharge(selectedVendor, freight);
+//           const tax = calcTaxFromVendor(
+//             selectedVendor,
+//             freight,
+//             fuel,
+//             prev.charges.contractCharges,
+//             prev.charges.otherCharges,
+//             prev.charges.discount,
+//           );
+
+//           return {
+//             ...prev,
+//             charges: {
+//               ...prev.charges,
+//               freight,
+//               fuelSurcharge: fuel,
+//               cgst: tax.cgst,
+//               sgst: tax.sgst,
+//               igst: tax.igst,
+//             },
+//           };
+//         });
+//       } catch {
+//         /* keep freight */
+//       }
+//     }
+
+//     loadAndApplyFreight();
+//     return () => {
+//       cancelled = true;
+//     };
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [
+//     data.vendor,
+//     selectedVendor,
+//     data.consignee?.country,
+//     data.destination,
+//     data.destinationCode,
+//     derived.chargeableWeight,
+//   ]);
+
+  // Auto-fill Freight from Masters → Carrier Rates (MUST be after `derived`)
+  
 
   function update<K extends keyof AWBBookingData>(
     field: K,

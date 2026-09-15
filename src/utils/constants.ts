@@ -1117,6 +1117,7 @@ export const FIRESTORE_COLLECTIONS = {
 
   RATES: "rates",
   FUEL_SURCHARGES: "fuelSurcharges",
+  CARRIER_RATES: "carrierRates",
   DAY_END_RECORDS: "dayEndRecords",
 
   INVOICES: "invoices",
@@ -1134,6 +1135,7 @@ PROFORMA_CATALOG_ITEMS: "proformaCatalogItems",
   PICKUP_REQUESTS: "pickupRequests",
   UPLOADS: "uploads",
   SETTINGS: "settings",
+  
 } as const;
 
 

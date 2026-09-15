@@ -282,6 +282,16 @@ const sections: NavSection[] = [
           "LOGISTICS_MANAGER",
         ],
       },
+            {
+        label: "Carrier Rates",
+        href: "/admin/masters/carrier-rates",
+        icon: BarChart3,
+        roles: [
+          "SUPER_ADMIN",
+          "ADMIN",
+          "LOGISTICS_MANAGER",
+        ],
+      },
       {
         label: "Vendors",
         href: "/admin/masters/vendors",

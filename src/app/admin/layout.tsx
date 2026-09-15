@@ -1478,6 +1478,7 @@ const masterLinks = [
   { label: "Vendors", href: "/admin/masters/vendors" },
   { label: "Services", href: "/admin/masters/services" },
   { label: "Country Metrics", href: "/admin/masters/countries" },
+  { label: "Carrier Rates", href: "/admin/masters/carrier-rates" },
   { label: "Origins", href: "/admin/masters/origins" },
   {
     label: "Proforma Items",

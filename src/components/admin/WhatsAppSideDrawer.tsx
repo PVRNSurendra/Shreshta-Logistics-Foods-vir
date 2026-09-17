@@ -1182,7 +1182,7 @@ function buildDefaultMessage(payload: WhatsAppDrawerPayload): string {
     ? `\nTrack here: ${payload.trackingUrl}`
     : "";
 
-  return `Dear ${greeting},
+  return `Dear ${payload.customerName},
 
 Your invoice for ${ref || greeting} (${brand}) is ready.${amountLine}${trackLine}
 

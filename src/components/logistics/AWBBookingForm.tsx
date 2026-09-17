@@ -45777,6 +45777,69 @@ function cleanVendorKey(value?: string): string {
     .replace(/[^A-Z0-9]/g, "");
 }
 
+// function matchCarrierRateClient(
+//   rates: CarrierRateRow[],
+//   opts: {
+//     vendorName?: string;
+//     vendorCode?: string;
+//     country?: string;
+//     weightKg: number;
+//   },
+// ): CarrierRateRow | null {
+//   const weight = Math.max(0, Number(opts.weightKg) || 0);
+//   if (weight <= 0) return null;
+
+//   const vendorKey = cleanVendorKey(opts.vendorName || opts.vendorCode);
+//   const countryKey = String(opts.country || "")
+//     .trim()
+//     .toUpperCase();
+
+//   const pool = rates.filter((r) => {
+//     if (r.enabled === false) return false;
+
+//     const rateVendor = cleanVendorKey(r.vendorName || r.vendorCode);
+//     const vOk =
+//       !vendorKey ||
+//       rateVendor === vendorKey ||
+//       rateVendor.startsWith(vendorKey) ||
+//       vendorKey.startsWith(rateVendor) ||
+//       String(r.vendorName || "")
+//         .toUpperCase()
+//         .includes(vendorKey) ||
+//       String(r.vendorCode || "")
+//         .toUpperCase()
+//         .includes(vendorKey);
+
+//     const rateCountry = String(r.country || "").toUpperCase();
+//     const rateCode = String(r.countryCode || "").toUpperCase();
+//     const cOk =
+//       !countryKey ||
+//       rateCountry === countryKey ||
+//       rateCode === countryKey ||
+//       rateCountry.includes(countryKey) ||
+//       countryKey.includes(rateCountry) ||
+//       (rateCode.length > 0 && countryKey.includes(rateCode));
+
+//     return vOk && cOk;
+//   });
+
+//   const containing = pool
+//     .filter((r) => weight >= r.weightFrom && weight <= r.weightTo)
+//     .sort(
+//       (a, b) =>
+//         a.weightTo - a.weightFrom - (b.weightTo - b.weightFrom) ||
+//         a.weightFrom - b.weightFrom,
+//     );
+
+//   if (containing.length > 0) return containing[0]!;
+
+//   const below = pool
+//     .filter((r) => r.weightFrom <= weight)
+//     .sort((a, b) => b.weightFrom - a.weightFrom);
+
+//   return below[0] ?? null;
+// }
+
 function matchCarrierRateClient(
   rates: CarrierRateRow[],
   opts: {
@@ -45823,6 +45886,9 @@ function matchCarrierRateClient(
     return vOk && cOk;
   });
 
+  if (!pool.length) return null;
+
+  // 1) Exact containing band (e.g. 21–40 for 25 kg, or 5–5 for 5 kg)
   const containing = pool
     .filter((r) => weight >= r.weightFrom && weight <= r.weightTo)
     .sort(
@@ -45830,9 +45896,19 @@ function matchCarrierRateClient(
         a.weightTo - a.weightFrom - (b.weightTo - b.weightFrom) ||
         a.weightFrom - b.weightFrom,
     );
-
   if (containing.length > 0) return containing[0]!;
 
+  // 2) Next higher slab (ceil) — FedEx half-kg FLAT tables
+  //    3.2 kg → 3.5 row, not 3.0
+  const above = pool
+    .filter((r) => r.weightFrom >= weight)
+    .sort(
+      (a, b) =>
+        a.weightFrom - b.weightFrom || a.weightTo - b.weightTo,
+    );
+  if (above.length > 0) return above[0]!;
+
+  // 3) Highest below (last resort)
   const below = pool
     .filter((r) => r.weightFrom <= weight)
     .sort((a, b) => b.weightFrom - a.weightFrom);
@@ -45840,14 +45916,27 @@ function matchCarrierRateClient(
   return below[0] ?? null;
 }
 
+// function computeFreightFromRateClient(
+//   rate: CarrierRateRow,
+//   chargeableWeightKg: number,
+// ): number {
+//   const w = Math.max(0, Number(chargeableWeightKg) || 0);
+//   if (rate.rateType === "PER_KG") {
+//     return Math.round((rate.price * w + Number.EPSILON) * 100) / 100;
+//   }
+//   return Math.round((rate.price + Number.EPSILON) * 100) / 100;
+// }
+
 function computeFreightFromRateClient(
   rate: CarrierRateRow,
   chargeableWeightKg: number,
 ): number {
   const w = Math.max(0, Number(chargeableWeightKg) || 0);
   if (rate.rateType === "PER_KG") {
+    // e.g. 25 kg × ₹767
     return Math.round((rate.price * w + Number.EPSILON) * 100) / 100;
   }
+  // FLAT: full slab price (e.g. 5 kg row → ₹4916)
   return Math.round((rate.price + Number.EPSILON) * 100) / 100;
 }
 
@@ -46429,7 +46518,8 @@ function mapSenderToShipper(s: SenderOption): ShipperFormData {
     iecNo: String(s.iecNo || "").trim(),
     documentType: String(s.documentType || "").trim(),
     documentNo: String(s.documentNo || "").trim(),
-    documentUrl: String((s as { documentUrl?: string }).documentUrl || "").trim(),
+    // documentUrl: String((s as { documentUrl?: string }).documentUrl || "").trim(),
+    documentUrl: String(s.documentUrl || "").trim(),
     origin: "",
     originCode: "",
   };
@@ -46722,8 +46812,237 @@ export default function AWBBookingForm({
 
   
 
+//   useEffect(() => {
+//     let cancelled = false;
+//     async function loadColoaders() {
+//       try {
+//         const headers = await authHeaders();
+//         const res = await fetch("/api/logistics/coloaders", {
+//           method: "GET",
+//           headers,
+//           credentials: "include",
+//           cache: "no-store",
+//         });
+//         const json = await res.json();
+//         if (!res.ok || !json.success || cancelled) return;
+//         const list = extractList(json.data);
+//         const mapped: CoLoaderOption[] = [];
+//         for (const row of list) {
+//           const code = String(row.code || row.coLoaderCode || "").trim();
+//           const name = String(row.name || row.coLoaderName || code).trim();
+//           if (!code && !name) continue;
+//           const enabled =
+//             row.enabled !== false &&
+//             String(row.status || "").toUpperCase() !== "INACTIVE";
+//           if (!enabled) continue;
+//           mapped.push({
+//             id: String(row.id || row.coLoaderId || code),
+//             code: code || name,
+//             name: name || code,
+//             contactPerson: String(row.contactPerson || "").trim() || undefined,
+//             phone: String(row.phone || "").trim() || undefined,
+//             email: String(row.email || "").trim() || undefined,
+//             enabled: true,
+//           });
+//         }
+//         setColoaders(mapped);
+//       } catch {
+//         /* ignore */
+//       }
+//     }
+//     loadColoaders();
+//     return () => {
+//       cancelled = true;
+//     };
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [firebaseUser]);
+
+//   useEffect(() => {
+//     let cancelled = false;
+
+//     async function loadColoaders() {
+//       try {
+//         const headers = await authHeaders();
+//         const res = await fetch("/api/logistics/coloaders", {
+//           method: "GET",
+//           headers,
+//           credentials: "include",
+//           cache: "no-store",
+//         });
+//         const json = await res.json();
+
+//         if (cancelled) return;
+
+//         if (!res.ok || !json?.success) {
+//           console.error("[coloaders]", res.status, json);
+//           setColoaders([]);
+//           return;
+//         }
+
+//         // Support: data as array, or data.items / coloaders / results, or top-level list
+//         const list = extractList(json.data ?? json);
+
+//         const mapped: CoLoaderOption[] = [];
+//         const seen = new Set<string>();
+
+//         for (const row of list) {
+//           const code = String(
+//             row.code ||
+//               row.coLoaderCode ||
+//               row.accountCode ||
+//               row.hubCode ||
+//               "",
+//           ).trim();
+//           const name = String(
+//             row.name ||
+//               row.coLoaderName ||
+//               row.companyName ||
+//               row.displayName ||
+//               code,
+//           ).trim();
+
+//           if (!code && !name) continue;
+
+//           // Treat missing enabled as true; only exclude explicit false / INACTIVE
+//           const status = String(row.status || "ACTIVE").toUpperCase();
+//           const enabledRaw = row.enabled;
+//           const enabled =
+//             enabledRaw !== false &&
+//             enabledRaw !== "false" &&
+//             enabledRaw !== 0 &&
+//             status !== "INACTIVE" &&
+//             status !== "DISABLED";
+
+//           if (!enabled) continue;
+
+//           const id = String(
+//             row.id || row.coLoaderId || code || name,
+//           ).trim();
+//           const key = (code || name).toUpperCase();
+//           if (seen.has(key)) continue;
+//           seen.add(key);
+
+//           mapped.push({
+//             id,
+//             code: code || name,
+//             name: name || code,
+//             contactPerson:
+//               String(row.contactPerson || "").trim() || undefined,
+//             phone: String(row.phone || "").trim() || undefined,
+//             email: String(row.email || "").trim() || undefined,
+//             enabled: true,
+//           });
+//         }
+
+//         mapped.sort((a, b) => a.code.localeCompare(b.code));
+//         setColoaders(mapped);
+//       } catch (err) {
+//         console.error("[coloaders] load failed", err);
+//         if (!cancelled) setColoaders([]);
+//       }
+//     }
+
+//     void loadColoaders();
+//     return () => {
+//       cancelled = true;
+//     };
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [firebaseUser]);
+
+//   useEffect(() => {
+//     let cancelled = false;
+
+//     async function loadColoadersFromUsers() {
+//       try {
+//         const headers = await authHeaders();
+//         // Users only — role CO_LOADER (no coLoaders collection)
+//         const res = await fetch(
+//           "/api/admin/users?role=CO_LOADER&status=ACTIVE",
+//           {
+//             method: "GET",
+//             headers,
+//             credentials: "include",
+//             cache: "no-store",
+//           },
+//         );
+//         const json = await res.json();
+
+//         if (cancelled) return;
+
+//         if (!res.ok || !json?.success) {
+//           console.error("[coloader users]", res.status, json);
+//           setColoaders([]);
+//           return;
+//         }
+
+//         const list = extractList(json.data ?? json);
+//         const mapped: CoLoaderOption[] = [];
+//         const seen = new Set<string>();
+
+//         for (const row of list) {
+//           const role = String(row.role || "CO_LOADER").toUpperCase();
+//           if (role && role !== "CO_LOADER") continue;
+
+//           const code = String(
+//             row.coLoaderCode ||
+//               row.accountCode ||
+//               row.code ||
+//               row.hubCode ||
+//               "",
+//           )
+//             .trim()
+//             .toUpperCase();
+
+//           const name = String(
+//             row.name || row.displayName || row.companyName || code,
+//           ).trim();
+
+//           if (!code) continue;
+
+//           const status = String(row.status || "ACTIVE").toUpperCase();
+//           const enabledRaw = row.enabled ?? row.isActive;
+//           const enabled =
+//             enabledRaw !== false &&
+//             enabledRaw !== "false" &&
+//             enabledRaw !== 0 &&
+//             status !== "INACTIVE" &&
+//             status !== "DISABLED";
+
+//           if (!enabled) continue;
+
+//           if (seen.has(code)) continue;
+//           seen.add(code);
+
+//           mapped.push({
+//             id: String(row.userId || row.id || code),
+//             code,
+//             name: name || code,
+//             contactPerson:
+//               String(row.contactPerson || "").trim() || undefined,
+//             phone: String(row.phone || "").trim() || undefined,
+//             email: String(row.email || "").trim() || undefined,
+//             enabled: true,
+//           });
+//         }
+
+//         mapped.sort((a, b) => a.code.localeCompare(b.code));
+//         setColoaders(mapped);
+//       } catch (err) {
+//         console.error("[coloader users] load failed", err);
+//         if (!cancelled) setColoaders([]);
+//       }
+//     }
+
+//     void loadColoadersFromUsers();
+//     return () => {
+//       cancelled = true;
+//     };
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [firebaseUser]);
+
   useEffect(() => {
     let cancelled = false;
+
     async function loadColoaders() {
       try {
         const headers = await authHeaders();
@@ -46734,38 +47053,74 @@ export default function AWBBookingForm({
           cache: "no-store",
         });
         const json = await res.json();
-        if (!res.ok || !json.success || cancelled) return;
-        const list = extractList(json.data);
+
+        if (cancelled) return;
+
+        if (!res.ok || !json?.success) {
+          console.error("[coloaders]", res.status, json);
+          setColoaders([]);
+          return;
+        }
+
+        // API returns { items, me }
+        const list = extractList(json.data ?? json);
+
         const mapped: CoLoaderOption[] = [];
+        const seen = new Set<string>();
+
         for (const row of list) {
-          const code = String(row.code || row.coLoaderCode || "").trim();
-          const name = String(row.name || row.coLoaderName || code).trim();
-          if (!code && !name) continue;
+          const code = String(
+            row.code || row.accountCode || row.coLoaderCode || "",
+          )
+            .trim()
+            .toUpperCase();
+          const name = String(
+            row.name || row.companyName || row.displayName || code,
+          ).trim();
+
+          if (!code) continue;
+
+          const status = String(row.status || "ACTIVE").toUpperCase();
+          const enabledRaw = row.enabled;
           const enabled =
-            row.enabled !== false &&
-            String(row.status || "").toUpperCase() !== "INACTIVE";
+            enabledRaw !== false &&
+            enabledRaw !== "false" &&
+            enabledRaw !== 0 &&
+            status !== "INACTIVE" &&
+            status !== "DISABLED";
+
           if (!enabled) continue;
+
+          if (seen.has(code)) continue;
+          seen.add(code);
+
           mapped.push({
             id: String(row.id || row.coLoaderId || code),
-            code: code || name,
+            code,
             name: name || code,
-            contactPerson: String(row.contactPerson || "").trim() || undefined,
+            contactPerson:
+              String(row.contactPerson || "").trim() || undefined,
             phone: String(row.phone || "").trim() || undefined,
             email: String(row.email || "").trim() || undefined,
             enabled: true,
           });
         }
+
+        mapped.sort((a, b) => a.code.localeCompare(b.code));
         setColoaders(mapped);
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.error("[coloaders] load failed", err);
+        if (!cancelled) setColoaders([]);
       }
     }
-    loadColoaders();
+
+    void loadColoaders();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firebaseUser]);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -47355,6 +47710,73 @@ useEffect(() => {
 //     };
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, [firebaseUser]);
+
+
+  useEffect(() => {
+  let cancelled = false;
+
+  async function loadOrigins() {
+    try {
+      const headers = await authHeaders();
+
+      const res = await fetch("/api/logistics/origins", {
+        method: "GET",
+        headers,
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json?.success || cancelled) {
+        console.error("Failed to load origins:", json);
+        return;
+      }
+
+      const list = extractList(json.data);
+
+      if (cancelled) return;
+
+      const mapped: OriginOption[] = [];
+
+      for (const row of list) {
+        const id = String(row.id || row.originId || "").trim();
+        const name = String(row.name || "").trim();
+        const code = String(row.code || "")
+          .trim()
+          .toUpperCase();
+
+        const status = String(row.status || "ACTIVE").toUpperCase();
+        const enabled =
+          row.enabled === undefined
+            ? status !== "INACTIVE"
+            : Boolean(row.enabled);
+
+        if (!name || !enabled) continue;
+
+        mapped.push({
+          id: id || name,
+          name,
+          code: code || undefined,
+        });
+      }
+
+      setOrigins(mapped);
+    } catch (error) {
+      if (!cancelled) {
+        console.error("Failed to load origins:", error);
+        setOrigins([]);
+      }
+    }
+  }
+
+  loadOrigins();
+
+  return () => {
+    cancelled = true;
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [firebaseUser]);
 
   // Recalc fuel + tax when freight / extras change
   useEffect(() => {
@@ -48078,14 +48500,35 @@ const derived = useMemo(() => {
     }));
   }
 
-  function handleDestinationSelect(name: string) {
-    const d = destinations.find((x) => x.name === name);
+//   function handleDestinationSelect(name: string) {
+//     const d = destinations.find((x) => x.name === name);
+//     setData((prev) => ({
+//       ...prev,
+//       destination: name,
+//       destinationCode: d?.code || prev.destinationCode,
+//     }));
+//   }
+
+function handleDestinationSelect(name: string) {
+  if (!name) {
     setData((prev) => ({
       ...prev,
-      destination: name,
-      destinationCode: d?.code || prev.destinationCode,
+      destination: "",
+      destinationCode: "",
     }));
+    return;
   }
+
+  const d = destinations.find(
+    (x) => x.name === name || x.code === name || x.id === name,
+  );
+
+  setData((prev) => ({
+    ...prev,
+    destination: d?.name || name,
+    destinationCode: d?.code || "",
+  }));
+}
 
   function handleCountryChange(country: string) {
     const selectedCountry = countries.find(
@@ -48110,12 +48553,36 @@ const derived = useMemo(() => {
     }));
   }
 
+//   function handleCoLoaderSelect(code: string) {
+//     const c = coloaders.find((x) => x.code === code);
+//     setData((prev) => ({
+//       ...prev,
+//       accountCode: code,
+//       customerName: c?.name || prev.customerName,
+//       customerId: c?.id || prev.customerId,
+//     }));
+//   }
+
   function handleCoLoaderSelect(code: string) {
-    const c = coloaders.find((x) => x.code === code);
+    const selected = String(code || "").trim();
+
+    if (!selected) {
+      setData((prev) => ({
+        ...prev,
+        accountCode: "",
+        customerName: "",
+        customerId: "",
+      }));
+      return;
+    }
+
+    const c = coloaders.find((x) => x.code === selected);
+
     setData((prev) => ({
       ...prev,
-      accountCode: code,
-      customerName: c?.name || prev.customerName,
+      accountCode: selected,
+      customerName: c?.name || "",
+      customerId: c?.id || "",
     }));
   }
 
@@ -48354,7 +48821,7 @@ const derived = useMemo(() => {
             </span>
           ) : null}
         </div>
-        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className={label}>Book Date *</label>
             <input
@@ -48364,9 +48831,10 @@ const derived = useMemo(() => {
               className={input}
             />
           </div>
+
           <div>
             <label className={label}>
-              Co-loader Code{lockAccountFields ? " (auto)" : ""}
+              Co-loader Code *{lockAccountFields ? " (auto)" : ""}
             </label>
             {lockAccountFields ? (
               <input
@@ -48396,10 +48864,16 @@ const derived = useMemo(() => {
                 className={input}
               />
             )}
+            {!lockAccountFields && coloaders.length === 0 ? (
+              <p className="mt-1 text-[11px] text-amber-700">
+                No active co-loaders. Add under Logistics → Co-loaders.
+              </p>
+            ) : null}
           </div>
+
           <div>
             <label className={label}>
-              Client Name *{lockAccountFields ? " (auto)" : ""}
+              Co Loader Name *{lockAccountFields ? " (auto)" : ""}
             </label>
             {lockAccountFields ? (
               <input
@@ -48413,6 +48887,8 @@ const derived = useMemo(() => {
                 value={data.customerName}
                 onChange={(e) => update("customerName", e.target.value)}
                 className={input}
+                placeholder="Co-loader Name"
+                readOnly={coloaders.length > 0}
               />
             )}
           </div>
@@ -48511,17 +48987,31 @@ const derived = useMemo(() => {
                   </div>
                 )}
               </div>
-              <div>
+              {/* <div>
                 <label className={label}>
                   Dest. Code{" "}
                   <span className="font-normal text-slate-400"></span>
                 </label>
                 <input
                   value={data.destinationCode}
+                  readOnly
                   onChange={(e) => update("destinationCode", e.target.value)}
+                  placeholder="Dest. Code"
                   className={input}
                 />
-              </div>
+              </div> */}
+
+              <div>
+                <label className={label}>
+                    Dest. Code
+                </label>
+                <input
+                    value={data.destinationCode}
+                    readOnly
+                    placeholder="Dest. Code"
+                    className={`${input} bg-gray-50`}
+                />
+            </div>
             </div>
             <ConsigneeForm
               value={data.consignee}
@@ -48574,7 +49064,7 @@ const derived = useMemo(() => {
                       : ""
                   }
                   readOnly
-                  className={`${input} bg-gray-50 font-semibold`}
+                  className={`${input} bg-gray-50`}
                   placeholder="Divisor"
                 />
               </div>
@@ -48659,7 +49149,7 @@ const derived = useMemo(() => {
                         : ""
                   }
                   readOnly
-                  className={`${input} bg-gray-50 font-semibold`}
+                  className={`${input} bg-gray-50`}
                   placeholder="Surcharge Code"
                 />
               </div>
@@ -48739,7 +49229,7 @@ const derived = useMemo(() => {
                 <input
                   value={data.serviceCode || ""}
                   readOnly
-                  className={`${input} bg-gray-50 font-semibold`}
+                  className={`${input} bg-gray-50 `}
                   placeholder="Service Code"
                 />
               </div>
@@ -48862,7 +49352,7 @@ const derived = useMemo(() => {
                 <input
                   value={data.productCode || ""}
                   readOnly
-                  className={`${input} bg-gray-50 font-semibold`}
+                  className={`${input} bg-gray-50`}
                   placeholder="Product Code"
                 />
               </div>
@@ -48916,7 +49406,7 @@ const derived = useMemo(() => {
                     )?.code || ""
                   }
                   readOnly
-                  className={`${input} bg-gray-50 font-semibold`}
+                  className={`${input} bg-gray-50`}
                   placeholder="Vendor Code"
                 />
               </div>
@@ -48972,6 +49462,7 @@ const derived = useMemo(() => {
                   min={0}
                   step="0.01"
                   value={data.shipmentValue}
+                  readOnly
                   onChange={(e) =>
                     update("shipmentValue", Number(e.target.value) || 0)
                   }
@@ -49086,6 +49577,7 @@ const derived = useMemo(() => {
                 className={`${input} bg-gray-50 font-semibold`}
               />
             </div>
+            
             <div className="col-span-2 flex flex-wrap gap-4 pt-1">
               <label className="flex items-center gap-2 text-sm">
                 <input

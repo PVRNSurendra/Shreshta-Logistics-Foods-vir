@@ -432,13 +432,14 @@ export default function LogisticsProductsPage() {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Code
+                    Code <span className="text-red-500">*</span>
                   </label>
                   <input
                     value={form.code}
                     onChange={(e) => updateForm("code", e.target.value)}
                     className={inputClass}
                     placeholder="Optional short code"
+                    required
                   />
                 </div>
                 <div>
@@ -454,7 +455,7 @@ export default function LogisticsProductsPage() {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Status
+                    Status <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={form.status}

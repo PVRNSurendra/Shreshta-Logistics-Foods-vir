@@ -1865,7 +1865,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { can } from "@/lib/permissions";
-
+import { Pencil,Trash2 } from "lucide-react";
 type CouponType = "PERCENTAGE" | "FIXED";
 
 type Coupon = {
@@ -2355,7 +2355,7 @@ export default function CouponsPage() {
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Coupon Code
+                Coupon Code <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.code}
@@ -2364,11 +2364,12 @@ export default function CouponsPage() {
                 }
                 placeholder="WELCOME10"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+                required
               />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Discount Type
+                Discount Type <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.type}
@@ -2376,6 +2377,7 @@ export default function CouponsPage() {
                   updateForm("type", e.target.value as CouponType)
                 }
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
+                required
               >
                 <option value="PERCENTAGE">Percentage (%)</option>
                 <option value="FIXED">Fixed (₹)</option>
@@ -2383,18 +2385,19 @@ export default function CouponsPage() {
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Discount Value
+                Discount Value <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.value}
                 onChange={(e) => updateForm("value", e.target.value)}
                 placeholder={form.type === "PERCENTAGE" ? "10" : "100"}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+                required
               />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Minimum Order
+                Minimum Order <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.minimumOrderAmount}
@@ -2403,6 +2406,7 @@ export default function CouponsPage() {
                 }
                 placeholder="500"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+                required
               />
             </div>
             <div>
@@ -2525,26 +2529,41 @@ export default function CouponsPage() {
                       <td className="px-5 py-4">
                         {canManage ? (
                           <div className="flex flex-wrap items-center gap-3">
-                            <button
+                            {/* <button
                               type="button"
                               onClick={() => openEdit(coupon)}
                               className="text-xs font-bold text-orange-600"
                             >
                               Edit
+                            </button> */}
+
+                            <button
+                              type="button"
+                              onClick={() => openEdit(coupon)}
+                              className="rounded p-1.5 text-slate-500 hover:bg-orange-50 hover:text-orange-600"
+                              title="Edit coupon"
+                              aria-label={`Edit ${coupon.code || "coupon"}`}
+                            >
+                              <Pencil className="h-4 w-4" />
                             </button>
+                            
+                            
+                            <button
+                              type="button"
+                              onClick={() => deleteCoupon(coupon)}
+                              className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                              title="Delete"
+                              aria-label="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+
                             <button
                               type="button"
                               onClick={() => toggleCoupon(coupon)}
                               className="text-xs font-bold text-slate-600"
                             >
                               {coupon.enabled ? "Disable" : "Enable"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => deleteCoupon(coupon)}
-                              className="text-xs font-bold text-red-600"
-                            >
-                              Delete
                             </button>
                           </div>
                         ) : (

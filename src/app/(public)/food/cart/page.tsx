@@ -434,6 +434,26 @@ type CartItem = {
   savedAt?: number;
 };
 
+type FoodSettingsPublic = {
+  acceptNewOrders: boolean;
+};
+
+const DEFAULT_SETTINGS = { acceptNewOrders: true };
+
+async function loadFoodSettings() {
+  try {
+    const res = await fetch("/api/food/settings", {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, ...json.data };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
 type StoredCart = {
   items: CartItem[];
   updatedAt?: number;
@@ -492,6 +512,18 @@ export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    const s = await loadFoodSettings();
+    if (!cancelled) setSettings(s);
+  })();
+  return () => {
+    cancelled = true;
+  };
+}, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -990,17 +1022,46 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <Link
-                    href="/food/checkout"
-                    className="btn-primary"
-                    style={{
-                      width: "100%",
-                      marginTop: 25,
-                      background: "#d97706",
-                    }}
-                  >
-                    Proceed to Checkout →
-                  </Link>
+                  {!settings.acceptNewOrders && (
+                    <div
+                      style={{
+                        marginBottom: 12,
+                        borderRadius: 10,
+                        border: "1px solid #fde68a",
+                        background: "#fffbeb",
+                        color: "#92400e",
+                        padding: "10px 12px",
+                        fontSize: 13,
+                        fontWeight: 600,
+                      }}
+                    >
+                      We are not accepting new orders right now.
+                    </div>
+                  )}
+
+                  {settings.acceptNewOrders ? (
+                    <Link
+                      href="/food/checkout"
+                      className="btn-primary"
+                      style={{ width: "100%", marginTop: 12, background: "#d97706" }}
+                    >
+                      Proceed to Checkout →
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="btn-primary"
+                      style={{
+                        width: "100%",
+                        marginTop: 12,
+                        background: "#a8a29e",
+                        cursor: "not-allowed",
+                      }}
+                    >
+                      Ordering paused
+                    </button>
+                  )}
                 </aside>
               </div>
             )}

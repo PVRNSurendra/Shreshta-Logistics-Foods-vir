@@ -2392,9 +2392,530 @@
 //   );
 // }
 
+// "use client";
+
+// import { useEffect, useMemo, useState } from "react";
+// import { useAuth } from "@/context/AuthContext";
+// import { can } from "@/lib/permissions";
+
+// type CategoryStatus = "ACTIVE" | "INACTIVE";
+
+// type Category = {
+//   categoryId: string;
+//   name: string;
+//   slug: string;
+//   products: number;
+//   status: CategoryStatus;
+//   description?: string;
+// };
+
+// type CategoryForm = {
+//   name: string;
+//   slug: string;
+//   description: string;
+// };
+
+// type ApiCategoriesResponse =
+//   | {
+//       success: true;
+//       data:
+//         | Record<string, unknown>[]
+//         | {
+//             categories?: Record<string, unknown>[];
+//             items?: Record<string, unknown>[];
+//             data?: Record<string, unknown>[];
+//           };
+//     }
+//   | {
+//       success: false;
+//       error: { code: string; message: string };
+//     };
+
+// type ApiMutationResponse =
+//   | { success: true; data?: unknown; message?: string }
+//   | {
+//       success: false;
+//       error: { code: string; message: string };
+//     };
+
+// const EMPTY_FORM: CategoryForm = {
+//   name: "",
+//   slug: "",
+//   description: "",
+// };
+
+// function slugify(value: string): string {
+//   return value
+//     .toLowerCase()
+//     .trim()
+//     .replace(/[^a-z0-9]+/g, "-")
+//     .replace(/(^-|-$)/g, "");
+// }
+
+// function extractList(data: unknown): Record<string, unknown>[] {
+//   if (Array.isArray(data)) return data as Record<string, unknown>[];
+//   if (!data || typeof data !== "object") return [];
+//   const obj = data as Record<string, unknown>;
+//   for (const key of ["categories", "items", "results", "data"]) {
+//     if (Array.isArray(obj[key])) return obj[key] as Record<string, unknown>[];
+//   }
+//   return [];
+// }
+
+// function normalizeCategory(raw: Record<string, unknown>): Category | null {
+//   const name = String(raw.name || raw.categoryName || "").trim();
+//   if (!name) return null;
+
+//   const categoryId = String(
+//     raw.categoryId || raw.id || `CAT-${slugify(name)}`,
+//   ).trim();
+
+//   const slug = String(raw.slug || slugify(name)).trim();
+
+//   const enabled =
+//     raw.enabled === undefined
+//       ? String(raw.status || "ACTIVE").toUpperCase() !== "INACTIVE"
+//       : Boolean(raw.enabled);
+
+//   return {
+//     categoryId,
+//     name,
+//     slug,
+//     products: typeof raw.products === "number" ? raw.products : 0,
+//     status: enabled ? "ACTIVE" : "INACTIVE",
+//     description: raw.description ? String(raw.description) : undefined,
+//   };
+// }
+
+// export default function CategoriesPage() {
+//   const { firebaseUser, user, loading: authLoading } = useAuth();
+
+//   const permUser = {
+//     userId: user?.userId ?? "",
+//     role: user?.role ?? null,
+//   };
+
+//   const canManage = can(permUser, "FOOD_CATEGORY_MANAGE");
+
+//   const [categories, setCategories] = useState<Category[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const [saving, setSaving] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const [message, setMessage] = useState<string | null>(null);
+//   const [showForm, setShowForm] = useState(false);
+//   const [form, setForm] = useState<CategoryForm>(EMPTY_FORM);
+//   const [reloadKey, setReloadKey] = useState(0);
+
+//   useEffect(() => {
+//     if (authLoading) return;
+
+//     let cancelled = false;
+
+//     async function loadCategories() {
+//       try {
+//         setLoading(true);
+//         setError(null);
+
+//         if (!firebaseUser) {
+//           throw new Error("Authentication is required to view categories.");
+//         }
+
+//         const token = await firebaseUser.getIdToken(true);
+
+//         const res = await fetch("/api/food/categories", {
+//           method: "GET",
+//           headers: {
+//             Accept: "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//           cache: "no-store",
+//         });
+
+//         const text = await res.text();
+//         let json: ApiCategoriesResponse;
+
+//         try {
+//           json = JSON.parse(text) as ApiCategoriesResponse;
+//         } catch {
+//           throw new Error(
+//             res.status === 404
+//               ? "Categories API not found. Ensure src/app/api/food/categories/route.ts exists and restart next dev."
+//               : `Categories API returned non-JSON (HTTP ${res.status}).`,
+//           );
+//         }
+
+//         if (!res.ok || !json.success) {
+//           throw new Error(
+//             !json.success
+//               ? json.error.message
+//               : `Failed to load categories (HTTP ${res.status}).`,
+//           );
+//         }
+
+//         const list = extractList(json.data)
+//           .map((item) => normalizeCategory(item))
+//           .filter(Boolean) as Category[];
+
+//         if (!cancelled) {
+//           setCategories(list.sort((a, b) => a.name.localeCompare(b.name)));
+//         }
+//       } catch (e) {
+//         if (!cancelled) {
+//           setError(
+//             e instanceof Error ? e.message : "Failed to load categories.",
+//           );
+//           setCategories([]);
+//         }
+//       } finally {
+//         if (!cancelled) setLoading(false);
+//       }
+//     }
+
+//     loadCategories();
+
+//     return () => {
+//       cancelled = true;
+//     };
+//   }, [authLoading, firebaseUser, reloadKey]);
+
+//   const activeCount = useMemo(
+//     () => categories.filter((c) => c.status === "ACTIVE").length,
+//     [categories],
+//   );
+
+//   function updateForm<K extends keyof CategoryForm>(
+//     key: K,
+//     value: CategoryForm[K],
+//   ) {
+//     setForm((current) => {
+//       const next = { ...current, [key]: value };
+//       if (key === "name") next.slug = slugify(String(value || ""));
+//       return next;
+//     });
+//   }
+
+//   async function createCategory() {
+//     if (!canManage) {
+//       setError("You do not have permission to create categories.");
+//       return;
+//     }
+
+//     try {
+//       setSaving(true);
+//       setError(null);
+//       setMessage(null);
+
+//       if (!firebaseUser) {
+//         throw new Error("Authentication is required to create categories.");
+//       }
+
+//       const name = form.name.trim();
+//       const slug = form.slug.trim() || slugify(name);
+
+//       if (!name) throw new Error("Category name is required.");
+//       if (!slug) throw new Error("Category slug is required.");
+
+//       const token = await firebaseUser.getIdToken(true);
+
+//       const res = await fetch("/api/food/categories", {
+//         method: "POST",
+//         headers: {
+//           Accept: "application/json",
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({
+//           name,
+//           slug,
+//           description: form.description.trim() || undefined,
+//           enabled: true,
+//         }),
+//       });
+
+//       const text = await res.text();
+//       let json: ApiMutationResponse;
+
+//       try {
+//         json = JSON.parse(text) as ApiMutationResponse;
+//       } catch {
+//         throw new Error(
+//           res.status === 404
+//             ? "Categories API not found. Create route.ts and restart next dev."
+//             : `Categories API returned non-JSON (HTTP ${res.status}).`,
+//         );
+//       }
+
+//       if (!res.ok || !json.success) {
+//         throw new Error(
+//           !json.success
+//             ? json.error.message
+//             : `Failed to create category (HTTP ${res.status}).`,
+//         );
+//       }
+
+//       setMessage("Category saved to database.");
+//       setForm(EMPTY_FORM);
+//       setShowForm(false);
+//       setReloadKey((v) => v + 1);
+//     } catch (e) {
+//       setError(e instanceof Error ? e.message : "Failed to create category.");
+//     } finally {
+//       setSaving(false);
+//     }
+//   }
+
+//   async function toggleCategory(category: Category) {
+//     if (!canManage) {
+//       setError("You do not have permission to change category status.");
+//       return;
+//     }
+
+//     const nextStatus: CategoryStatus =
+//       category.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+
+//     try {
+//       setError(null);
+//       setMessage(null);
+
+//       if (!firebaseUser) {
+//         throw new Error("Authentication is required.");
+//       }
+
+//       const token = await firebaseUser.getIdToken(true);
+
+//       const res = await fetch("/api/food/categories", {
+//         method: "PATCH",
+//         headers: {
+//           Accept: "application/json",
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({
+//           categoryId: category.categoryId,
+//           enabled: nextStatus === "ACTIVE",
+//         }),
+//       });
+
+//       const text = await res.text();
+//       let json: ApiMutationResponse;
+
+//       try {
+//         json = JSON.parse(text) as ApiMutationResponse;
+//       } catch {
+//         throw new Error(
+//           res.status === 404
+//             ? "Categories API not found."
+//             : `Categories API returned non-JSON (HTTP ${res.status}).`,
+//         );
+//       }
+
+//       if (!res.ok || !json.success) {
+//         throw new Error(
+//           !json.success
+//             ? json.error.message
+//             : `Failed to update category (HTTP ${res.status}).`,
+//         );
+//       }
+
+//       setMessage(`${category.name} marked as ${nextStatus}.`);
+//       setReloadKey((v) => v + 1);
+//     } catch (e) {
+//       setError(e instanceof Error ? e.message : "Failed to update category.");
+//     }
+//   }
+
+//   return (
+//     <div className="mx-auto max-w-[1200px]">
+//       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+//         <div>
+//           <p className="text-xs font-bold uppercase tracking-widest text-orange-600">
+//             Food
+//           </p>
+//           <h2 className="mt-1 text-2xl font-bold text-[#3b2516]">Categories</h2>
+//           <p className="mt-1 text-sm text-slate-500">
+//             Manage food product categories.
+//             {categories.length > 0
+//               ? ` ${activeCount} active of ${categories.length}.`
+//               : ""}
+//           </p>
+//           {!authLoading && !canManage && (
+//             <p className="mt-2 text-xs text-slate-500">
+//               View only — category manage permission required.
+//             </p>
+//           )}
+//         </div>
+
+//         <div className="flex gap-2">
+//           <button
+//             type="button"
+//             onClick={() => setReloadKey((v) => v + 1)}
+//             className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold"
+//           >
+//             Refresh
+//           </button>
+
+//           {canManage && (
+//             <button
+//               type="button"
+//               onClick={() => setShowForm((v) => !v)}
+//               className="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-bold text-white"
+//             >
+//               {showForm ? "Close Form" : "+ Add Category"}
+//             </button>
+//           )}
+//         </div>
+//       </div>
+
+//       {message && (
+//         <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+//           {message}
+//         </div>
+//       )}
+
+//       {error && (
+//         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+//           {error}
+//         </div>
+//       )}
+
+//       {canManage && showForm && (
+//         <section className="mb-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+//           <h3 className="font-bold text-[#3b2516]">New Category</h3>
+
+//           <div className="mt-4 grid gap-4 md:grid-cols-2">
+//             <div>
+//               <label className="mb-1.5 block text-xs font-bold text-slate-600">
+//                 Category Name <span className="text-red-500">*</span>
+//               </label>
+//               <input
+//                 value={form.name}
+//                 onChange={(e) => updateForm("name", e.target.value)}
+//                 placeholder="Dry Fruits"
+//                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+//                 required
+//               />
+//             </div>
+
+//             <div>
+//               <label className="mb-1.5 block text-xs font-bold text-slate-600">
+//                 Slug <span className="text-red-500">*</span>
+//               </label>
+//               <input
+//                 value={form.slug}
+//                 onChange={(e) => updateForm("slug", e.target.value)}
+//                 placeholder="dry-fruits"
+//                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+//                 required 
+//               />
+//             </div>
+
+//             <div className="md:col-span-2">
+//               <label className="mb-1.5 block text-xs font-bold text-slate-600">
+//                 Description
+//               </label>
+//               <input
+//                 value={form.description}
+//                 onChange={(e) => updateForm("description", e.target.value)}
+//                 placeholder="Optional description"
+//                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+//               />
+//             </div>
+//           </div>
+
+//           <button
+//             type="button"
+//             onClick={createCategory}
+//             disabled={saving || !firebaseUser}
+//             className="mt-4 rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+//           >
+//             {saving ? "Saving to database..." : "Create Category"}
+//           </button>
+//         </section>
+//       )}
+
+//       {loading || authLoading ? (
+//         <div className="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+//           <h3 className="text-lg font-bold text-[#3b2516]">
+//             Loading categories...
+//           </h3>
+//         </div>
+//       ) : (
+//         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+//           <div className="overflow-x-auto">
+//             <table className="w-full text-left text-sm">
+//               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+//                 <tr>
+//                   <th className="px-5 py-3">categoryId</th>
+//                   <th className="px-5 py-3">Category</th>
+//                   <th className="px-5 py-3">Slug</th>
+//                   <th className="px-5 py-3">Products</th>
+//                   <th className="px-5 py-3">Status</th>
+//                   <th className="px-5 py-3">Action</th>
+//                 </tr>
+//               </thead>
+//               <tbody className="divide-y divide-slate-100">
+//                 {categories.length === 0 ? (
+//                   <tr>
+//                     <td
+//                       colSpan={6}
+//                       className="px-5 py-16 text-center text-slate-500"
+//                     >
+//                       No categories in database yet.
+//                     </td>
+//                   </tr>
+//                 ) : (
+//                   categories.map((category) => (
+//                     <tr key={category.categoryId}>
+//                       <td className="px-5 py-4 font-mono text-xs text-orange-600">
+//                         {category.categoryId}
+//                       </td>
+//                       <td className="px-5 py-4 font-bold">{category.name}</td>
+//                       <td className="px-5 py-4 text-slate-500">
+//                         {category.slug}
+//                       </td>
+//                       <td className="px-5 py-4">{category.products}</td>
+//                       <td className="px-5 py-4">
+//                         <span
+//                           className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+//                             category.status === "ACTIVE"
+//                               ? "bg-emerald-100 text-emerald-700"
+//                               : "bg-slate-100 text-slate-500"
+//                           }`}
+//                         >
+//                           {category.status}
+//                         </span>
+//                       </td>
+//                       <td className="px-5 py-4">
+//                         {canManage ? (
+//                           <button
+//                             type="button"
+//                             onClick={() => toggleCategory(category)}
+//                             className="text-xs font-bold text-orange-600"
+//                           >
+//                             {category.status === "ACTIVE"
+//                               ? "Disable →"
+//                               : "Enable →"}
+//                           </button>
+//                         ) : (
+//                           <span className="text-xs text-slate-400">—</span>
+//                         )}
+//                       </td>
+//                     </tr>
+//                   ))
+//                 )}
+//               </tbody>
+//             </table>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { can } from "@/lib/permissions";
 
@@ -2500,6 +3021,7 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -2724,6 +3246,69 @@ export default function CategoriesPage() {
     }
   }
 
+  async function deleteCategory(category: Category) {
+    if (!canManage) {
+      setError("You do not have permission to delete categories.");
+      return;
+    }
+
+    const ok = window.confirm(
+      `Delete category "${category.name}"? This cannot be undone.`,
+    );
+    if (!ok) return;
+
+    try {
+      setDeletingId(category.categoryId);
+      setError(null);
+      setMessage(null);
+
+      if (!firebaseUser) {
+        throw new Error("Authentication is required.");
+      }
+
+      const token = await firebaseUser.getIdToken(true);
+
+      const res = await fetch(
+        `/api/food/categories?categoryId=${encodeURIComponent(category.categoryId)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const text = await res.text();
+      let json: ApiMutationResponse;
+
+      try {
+        json = JSON.parse(text) as ApiMutationResponse;
+      } catch {
+        throw new Error(
+          res.status === 404
+            ? "Categories API not found or DELETE is not implemented."
+            : `Categories API returned non-JSON (HTTP ${res.status}).`,
+        );
+      }
+
+      if (!res.ok || !json.success) {
+        throw new Error(
+          !json.success
+            ? json.error.message
+            : `Failed to delete category (HTTP ${res.status}).`,
+        );
+      }
+
+      setMessage(`Category "${category.name}" deleted.`);
+      setReloadKey((v) => v + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to delete category.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-[1200px]">
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -2785,25 +3370,27 @@ export default function CategoriesPage() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Category Name
+                Category Name <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.name}
                 onChange={(e) => updateForm("name", e.target.value)}
                 placeholder="Dry Fruits"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+                required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Slug
+                Slug <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.slug}
                 onChange={(e) => updateForm("slug", e.target.value)}
                 placeholder="dry-fruits"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+                required
               />
             </div>
 
@@ -2885,15 +3472,27 @@ export default function CategoriesPage() {
                       </td>
                       <td className="px-5 py-4">
                         {canManage ? (
-                          <button
-                            type="button"
-                            onClick={() => toggleCategory(category)}
-                            className="text-xs font-bold text-orange-600"
-                          >
-                            {category.status === "ACTIVE"
-                              ? "Disable →"
-                              : "Enable →"}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => toggleCategory(category)}
+                              className="text-xs font-bold text-orange-600"
+                            >
+                              {category.status === "ACTIVE"
+                                ? "Disable →"
+                                : "Enable →"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteCategory(category)}
+                              disabled={deletingId === category.categoryId}
+                              className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                              title="Delete category"
+                              aria-label={`Delete ${category.name}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-xs text-slate-400">—</span>
                         )}

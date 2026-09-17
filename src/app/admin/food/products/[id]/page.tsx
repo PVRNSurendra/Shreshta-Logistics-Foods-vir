@@ -3404,7 +3404,7 @@ export default function ProductDetailPage() {
           <div className="grid gap-4 p-5 md:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Product Name
+                Product Name <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.name}
@@ -3412,12 +3412,13 @@ export default function ProductDetailPage() {
                 disabled={!canManage}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm disabled:bg-slate-50"
                 placeholder="Premium Cashews"
+                required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Slug
+                Slug <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.slug}
@@ -3425,18 +3426,20 @@ export default function ProductDetailPage() {
                 disabled={!canManage}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm disabled:bg-slate-50"
                 placeholder="premium-cashews"
+                required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Category
+                Category <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.categoryId}
                 onChange={(e) => onCategoryChange(e.target.value)}
                 disabled={!canManage}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm disabled:bg-slate-50"
+                required
               >
                 <option value="">Select category…</option>
                 {categoryOptions.map((item) => (
@@ -3455,7 +3458,7 @@ export default function ProductDetailPage() {
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Status
+                Status <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.status}
@@ -3464,6 +3467,7 @@ export default function ProductDetailPage() {
                 }
                 disabled={!canManage}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm disabled:bg-slate-50"
+                required
               >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
@@ -3473,7 +3477,7 @@ export default function ProductDetailPage() {
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Food License Number
+                Food License Number 
               </label>
               <input
                 type="text"

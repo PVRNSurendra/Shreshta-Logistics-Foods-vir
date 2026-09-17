@@ -132,7 +132,7 @@ export default function FlagChargesPage() {
           <>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                Commercial Charges (₹)
+                Commercial Charges (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -147,11 +147,12 @@ export default function FlagChargesPage() {
                 }
                 className={inputClass}
                 disabled={!canManage}
+                required
               />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                ODA Charges (₹)
+                ODA Charges (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -166,11 +167,12 @@ export default function FlagChargesPage() {
                 }
                 className={inputClass}
                 disabled={!canManage}
+                required
               />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                Medical Charges (₹)
+                Medical Charges (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -185,6 +187,7 @@ export default function FlagChargesPage() {
                 }
                 className={inputClass}
                 disabled={!canManage}
+                required
               />
             </div>
 

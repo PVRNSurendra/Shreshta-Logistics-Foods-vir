@@ -191,43 +191,47 @@ export default function ProformaItemsMasterPage() {
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-gray-600">Description *</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600">Description <span className="text-red-500">*</span></label>
               <input
                 className={input}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="e.g. KIDS WEAR TSHIRT MADE OF 100% COTTON"
+                required
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Shop Name</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600">Shop Name <span className="text-red-500">*</span></label>
               <input
                 className={input}
                 value={form.shopName}
                 onChange={(e) => setForm({ ...form, shopName: e.target.value })}
                 placeholder="Shop name"
+                required
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">HS Code</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600">HS Code <span className="text-red-500">*</span></label>
               <input
                 className={input}
                 value={form.hsCode}
                 onChange={(e) => setForm({ ...form, hsCode: e.target.value })}
                 placeholder="e.g. 6109901009"
+                required
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-gray-600">Shop Address</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600">Shop Address <span className="text-red-500">*</span></label>
               <input
                 className={input}
                 value={form.shopAddress}
                 onChange={(e) => setForm({ ...form, shopAddress: e.target.value })}
                 placeholder="Full shop address"
+                required
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Default Rate</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600">Default Rate <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 min={0}
@@ -235,16 +239,18 @@ export default function ProformaItemsMasterPage() {
                 className={input}
                 value={form.defaultRate}
                 onChange={(e) => setForm({ ...form, defaultRate: Number(e.target.value) || 0 })}
+                required
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Default Qty</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600">Default Qty <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 min={1}
                 className={input}
                 value={form.defaultQty}
                 onChange={(e) => setForm({ ...form, defaultQty: Number(e.target.value) || 1 })}
+                required
               />
             </div>
             <div className="flex items-center gap-2">

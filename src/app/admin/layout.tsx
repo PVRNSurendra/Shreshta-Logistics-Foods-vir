@@ -1499,9 +1499,11 @@ const foodLinks = [
   { label: "Products", href: "/admin/food/products" },
   { label: "Categories", href: "/admin/food/categories" },
   { label: "Orders", href: "/admin/food/orders" },
+  { label: "Bills", href: "/admin/food/bills" },
   { label: "Inventory", href: "/admin/food/inventory" },
   { label: "Coupons", href: "/admin/food/coupons" },
   { label: "Settings", href: "/admin/food/settings" },
+
 ];
 
 const adminLinks = [
@@ -1545,6 +1547,125 @@ function NavLink({
   );
 }
 
+// function SidebarNav({
+//   onNavigate,
+//   role,
+// }: {
+//   onNavigate?: () => void;
+//   role?: string | null;
+// }) {
+//   const normalized = String(role || "")
+//     .trim()
+//     .toUpperCase();
+
+//   const isAdmin =
+//     normalized === "SUPER_ADMIN" || normalized === "ADMIN";
+//   const isCoLoader = normalized === "CO_LOADER";
+
+//   /** Masters / Food / Administration: admin only */
+//   const showMasters = isAdmin;
+//   const showFood = isAdmin;
+//   const showAdministration = isAdmin;
+
+//   const visibleLogisticsLinks = logisticsLinks.filter((item) => {
+//     if (isCoLoader && CO_LOADER_HIDDEN_LOGISTICS.has(item.href)) {
+//       return false;
+//     }
+//     return true;
+//   });
+
+//   const visibleMasterLinks = masterLinks.filter((item) => {
+//     if (!showMasters) return false;
+//     if ((item as { adminOnly?: boolean }).adminOnly) {
+//       return isAdmin;
+//     }
+//     return true;
+//   });
+
+//   return (
+//     <nav className="px-3 py-5">
+//       <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
+//         Overview
+//       </p>
+//       <div className="mt-2">
+//         <NavLink
+//           href="/admin/dashboard"
+//           label="Dashboard"
+//           onNavigate={onNavigate}
+//         />
+//       </div>
+
+//       <p className="mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
+//         Logistics
+//       </p>
+//       <div className="mt-2 space-y-1">
+//         {visibleLogisticsLinks.map((item) => (
+//           <NavLink
+//             key={item.href}
+//             href={item.href}
+//             label={item.label}
+//             onNavigate={onNavigate}
+//           />
+//         ))}
+//       </div>
+
+//       {showMasters ? (
+//         <>
+//           <p className="mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
+//             Masters
+//           </p>
+//           <div className="mt-2 space-y-1">
+//             {visibleMasterLinks.map((item) => (
+//               <NavLink
+//                 key={item.href}
+//                 href={item.href}
+//                 label={item.label}
+//                 onNavigate={onNavigate}
+//               />
+//             ))}
+//           </div>
+//         </>
+//       ) : null}
+
+//       {showFood ? (
+//         <>
+//           <p className="mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
+//             Food
+//           </p>
+//           <div className="mt-2 space-y-1">
+//             {foodLinks.map((item) => (
+//               <NavLink
+//                 key={item.href}
+//                 href={item.href}
+//                 label={item.label}
+//                 onNavigate={onNavigate}
+//               />
+//             ))}
+//           </div>
+//         </>
+//       ) : null}
+
+//       {showAdministration ? (
+//         <>
+//           <p className="mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
+//             Administration
+//           </p>
+//           <div className="mt-2 space-y-1">
+//             {adminLinks.map((item) => (
+//               <NavLink
+//                 key={item.href}
+//                 href={item.href}
+//                 label={item.label}
+//                 onNavigate={onNavigate}
+//               />
+//             ))}
+//           </div>
+//         </>
+//       ) : null}
+//     </nav>
+//   );
+// }
+
 function SidebarNav({
   onNavigate,
   role,
@@ -1559,10 +1680,14 @@ function SidebarNav({
   const isAdmin =
     normalized === "SUPER_ADMIN" || normalized === "ADMIN";
   const isCoLoader = normalized === "CO_LOADER";
+  const isFoodStaff =
+    normalized === "FOOD_MANAGER" ||
+    normalized === "FOOD_OPERATOR" ||
+    normalized === "ACCOUNTANT";
 
-  /** Masters / Food / Administration: admin only */
+  /** Masters / Administration: admin only. Food: admin + food roles */
   const showMasters = isAdmin;
-  const showFood = isAdmin;
+  const showFood = isAdmin || isFoodStaff;
   const showAdministration = isAdmin;
 
   const visibleLogisticsLinks = logisticsLinks.filter((item) => {

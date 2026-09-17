@@ -1569,6 +1569,7 @@ type ReceiverForm = {
   iecNo: string;
   documentType: string;
   documentNo: string;
+  documentUrl: string; // ← add
   status: ReceiverStatus;
 };
 
@@ -1609,6 +1610,7 @@ const EMPTY_FORM: ReceiverForm = {
   iecNo: "",
   documentType: "",
   documentNo: "",
+  documentUrl: "", // ← add
   status: "ACTIVE",
 };
 
@@ -1694,6 +1696,7 @@ function toForm(receiver?: Receiver | null): ReceiverForm {
     iecNo: receiver.iecNo || "",
     documentType: receiver.documentType || "",
     documentNo: receiver.documentNo || "",
+    documentUrl: receiver.documentUrl || "", // ← add
     status: receiver.status || "ACTIVE",
   };
 }
@@ -1719,6 +1722,7 @@ export default function ReceiversPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Receiver | null>(null);
   const [form, setForm] = useState<ReceiverForm>(EMPTY_FORM);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -1840,6 +1844,45 @@ export default function ReceiversPage() {
     }));
   }
 
+  async function uploadReceiverDocument(file: File | null) {
+  if (!file || !firebaseUser) return;
+  const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+  if (!allowed.includes(file.type)) {
+    setError("Only JPG, PNG, WebP, or PDF allowed.");
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    setError("File must be 10 MB or smaller.");
+    return;
+  }
+  try {
+    setUploadingDoc(true);
+    setError(null);
+    const token = await firebaseUser.getIdToken(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("context", "receiver-document");
+    const res = await fetch("/api/uploads", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json?.error?.message || "Upload failed.");
+    }
+    const url = String(
+      json.data?.downloadUrl || json.data?.url || "",
+    ).trim();
+    if (!url) throw new Error("No download URL returned.");
+    updateForm("documentUrl", url);
+  } catch (e) {
+    setError(e instanceof Error ? e.message : "Upload failed.");
+  } finally {
+    setUploadingDoc(false);
+  }
+}
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -1894,6 +1937,7 @@ export default function ReceiversPage() {
         iecNo: form.iecNo.trim() || undefined,
         documentType: form.documentType.trim() || undefined,
         documentNo: form.documentNo.trim() || undefined,
+        documentUrl: form.documentUrl.trim() || null, // ← add (null, not undefined)
         status: form.status,
         ...(editing ? { receiverId: editing.receiverId } : {}),
       };
@@ -2554,35 +2598,38 @@ export default function ReceiversPage() {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    IEC No.
+                    IEC No.<span className="text-red-500"> *</span>
                   </label>
                   <input
                     value={form.iecNo}
                     onChange={(e) => updateForm("iecNo", e.target.value)}
                     className={inputClass}
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    GSTIN
+                    GSTIN<span className="text-red-500"> *</span>
                   </label>
                   <input
                     value={form.gstin}
                     onChange={(e) => updateForm("gstin", e.target.value)}
                     className={inputClass}
                     placeholder="GSTIN (optional)"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Document Type
+                    Document Type<span className="text-red-500"> *</span>
                   </label>
                   <select
                     value={form.documentType}
                     onChange={(e) => updateForm("documentType", e.target.value)}
                     className={inputClass}
+                    required
                   >
                     {DOCUMENT_TYPES.map((t) => (
                       <option key={t.value || "select"} value={t.value}>
@@ -2594,18 +2641,55 @@ export default function ReceiversPage() {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Document No.
+                    Document No.<span className="text-red-500"> *</span>
                   </label>
                   <input
                     value={form.documentNo}
                     onChange={(e) => updateForm("documentNo", e.target.value)}
                     className={inputClass}
+                    required
                   />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Document file (image / PDF)<span className="text-red-500"> *</span>
+                  </label>
+                  <label
+                    className={[
+                      "mt-1 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50",
+                      saving || uploadingDoc || !firebaseUser
+                        ? "pointer-events-none opacity-60"
+                        : "",
+                    ].join(" ")}
+                  >
+                    {uploadingDoc ? "Uploading…" : "Upload image or PDF"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      className="hidden"
+                      disabled={saving || uploadingDoc || !firebaseUser}
+                      onChange={(e) =>
+                        uploadReceiverDocument(e.target.files?.[0] ?? null)
+                      }
+                      required
+                    />
+                  </label>
+                  {form.documentUrl ? (
+                    <a
+                      href={form.documentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-block text-xs font-semibold text-[#087f87] hover:underline"
+                    >
+                      View uploaded document
+                    </a>
+                  ) : null}
                 </div>
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Status
+                    Status<span className="text-red-500"> *</span>
                   </label>
                   <select
                     value={form.status}

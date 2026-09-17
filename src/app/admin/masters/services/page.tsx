@@ -1329,7 +1329,7 @@ export default function ServicesPage() {
             >
               <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Service Name *
+                  Service Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.name}
@@ -1341,19 +1341,20 @@ export default function ServicesPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Service Code
+                  Service Code <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.code}
                   onChange={(e) => updateForm("code", e.target.value)}
                   className={inputClass}
                   placeholder="e.g. DOM-EXP"
+                  required
                 />
               </div>
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Service Type *
+                  Service Type <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={form.type}
@@ -1387,19 +1388,20 @@ export default function ServicesPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Coverage
+                  Coverage <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.coverage}
                   onChange={(e) => updateForm("coverage", e.target.value)}
                   className={inputClass}
                   placeholder="e.g. Domestic / International"
+                  required
                 />
               </div>
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Status
+                  Status <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={form.status}
@@ -1409,6 +1411,7 @@ export default function ServicesPage() {
                       e.target.value as ServiceStatus,
                     )
                   }
+                  required
                   className={inputClass}
                 >
                   <option value="ACTIVE">ACTIVE</option>

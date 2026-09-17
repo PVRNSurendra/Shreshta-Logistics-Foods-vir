@@ -1234,7 +1234,7 @@ export default function CoLoadersPage() {
           >
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                Company / Name *
+                Coloader Name *
               </label>
               <input
                 value={form.name}
@@ -1263,7 +1263,7 @@ export default function CoLoadersPage() {
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
                 Contact person
               </label>
@@ -1274,7 +1274,7 @@ export default function CoLoadersPage() {
                 }
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
               />
-            </div>
+            </div> */}
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">

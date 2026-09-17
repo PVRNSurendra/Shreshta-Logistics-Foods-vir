@@ -3464,6 +3464,189 @@ const DOCUMENT_TYPES = [
   { value: "VOTER_ID", label: "Voter Id" },
 ];
 
+// function DocumentPreview({
+//   url,
+//   onClear,
+// }: {
+//   url: string;
+//   onClear?: () => void;
+// }) {
+//   const [open, setOpen] = useState(false);
+//   const isPdf = /\.pdf(\?|$)/i.test(url) || url.toLowerCase().includes("application/pdf");
+
+//   return (
+//     <>
+//       <div className="flex items-start gap-3">
+//         <button
+//           type="button"
+//           onClick={() => setOpen(true)}
+//           className="group relative h-16 w-16 overflow-hidden rounded border border-slate-200 bg-slate-50"
+//           title="Click to enlarge"
+//         >
+//           {isPdf ? (
+//             <span className="flex h-full w-full flex-col items-center justify-center text-[10px] font-bold text-slate-600">
+//               <FileText className="mb-0.5 h-5 w-5 text-[#087f87]" />
+//               PDF
+//             </span>
+//           ) : (
+//             // eslint-disable-next-line @next/next/no-img-element
+//             <img
+//               src={url}
+//               alt="Document"
+//               className="h-full w-full object-cover transition group-hover:opacity-90"
+//             />
+//           )}
+//         </button>
+//         <div className="flex flex-col gap-1 text-xs">
+//           <button
+//             type="button"
+//             onClick={() => setOpen(true)}
+//             className="text-left font-semibold text-[#087f87] hover:underline"
+//           >
+//             View / enlarge
+//           </button>
+//           <a
+//             href={url}
+//             target="_blank"
+//             rel="noreferrer"
+//             className="text-slate-500 hover:underline"
+//           >
+//             Open in new tab
+//           </a>
+//           {onClear ? (
+//             <button
+//               type="button"
+//               onClick={onClear}
+//               className="text-left text-red-600 hover:underline"
+//             >
+//               Remove
+//             </button>
+//           ) : null}
+//         </div>
+//       </div>
+
+//       {open ? (
+//         <div
+//           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+//           onClick={() => setOpen(false)}
+//         >
+//           <div
+//             className="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-lg bg-white p-2 shadow-xl"
+//             onClick={(e) => e.stopPropagation()}
+//           >
+//             <button
+//               type="button"
+//               onClick={() => setOpen(false)}
+//               className="absolute right-2 top-2 z-10 rounded bg-slate-900/80 px-2 py-1 text-xs font-bold text-white"
+//             >
+//               Close
+//             </button>
+//             {isPdf ? (
+//               <iframe
+//                 src={url}
+//                 title="Document"
+//                 className="h-[80vh] w-[min(900px,90vw)] rounded border-0"
+//               />
+//             ) : (
+//               // eslint-disable-next-line @next/next/no-img-element
+//               <img
+//                 src={url}
+//                 alt="Document full size"
+//                 className="max-h-[85vh] max-w-full object-contain"
+//               />
+//             )}
+//           </div>
+//         </div>
+//       ) : null}
+//     </>
+//   );
+// }
+
+function DocumentPreview({ url }: { url: string }) {
+  const [open, setOpen] = useState(false);
+  const isPdf =
+    /\.pdf(\?|$)/i.test(url) ||
+    url.toLowerCase().includes("application/pdf");
+
+  return (
+    <>
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="group relative h-16 w-16 overflow-hidden rounded border border-slate-200 bg-slate-50"
+          title="Click to enlarge"
+        >
+          {isPdf ? (
+            <span className="flex h-full w-full flex-col items-center justify-center text-[10px] font-bold text-slate-600">
+              <FileText className="mb-0.5 h-5 w-5 text-[#087f87]" />
+              PDF
+            </span>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={url}
+              alt="Document"
+              className="h-full w-full object-cover transition group-hover:opacity-90"
+            />
+          )}
+        </button>
+        <div className="flex flex-col gap-1 text-xs">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-left font-semibold text-[#087f87] hover:underline"
+          >
+            View / enlarge
+          </button>
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-slate-500 hover:underline"
+          >
+            Open in new tab
+          </a>
+        </div>
+      </div>
+
+      {open ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-lg bg-white p-2 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute right-2 top-2 z-10 rounded bg-slate-900/80 px-2 py-1 text-xs font-bold text-white"
+            >
+              Close
+            </button>
+            {isPdf ? (
+              <iframe
+                src={url}
+                title="Document"
+                className="h-[80vh] w-[min(900px,90vw)] rounded border-0"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={url}
+                alt="Document full size"
+                className="max-h-[85vh] max-w-full object-contain"
+              />
+            )}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 export default function ShipperForm({
   value,
   onChange,
@@ -3598,18 +3781,27 @@ export default function ShipperForm({
             </p>
           ) : null}
         </div>
-        <div>
+        {/* <div>
           <label className={label}>Origin Code</label>
           <input
             value={value.originCode || ""}
             onChange={(e) => update("originCode", e.target.value)}
-            placeholder="Auto from master"
+            placeholder="Origin Code"
             disabled={disabled || origins.length > 0}
             className={
-              origins.length > 0 ? `${input} bg-gray-50 font-semibold` : input
+              origins.length > 0 ? `${input} bg-gray-50` : input
             }
           />
-        </div>
+        </div> */}
+        <div>
+        <label className={label}>Origin Code</label>
+        <input
+          value={value.originCode || ""}
+          readOnly
+          placeholder="Origin Code"
+          className={`${input} bg-gray-50`}
+        />
+      </div>
       </div>
 
       <div>
@@ -3851,7 +4043,7 @@ export default function ShipperForm({
       </div>
 
       {/* Same upload UI as Consignee */}
-      <div>
+      {/* <div>
         <label className={label}>Document file (image / PDF)</label>
         <div className="flex flex-col gap-2">
           <label
@@ -3898,6 +4090,67 @@ export default function ShipperForm({
             <p className="text-xs text-red-600">{uploadError}</p>
           ) : null}
         </div>
+      </div> */}
+
+      {/* Document file */}
+{/* <div>
+  <label className={label}>Document file (image / PDF)</label>
+  <div className="flex flex-col gap-2">
+    <label
+      className={[
+        "flex h-9 cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-gray-300 bg-white px-2 text-xs font-medium text-slate-700 hover:bg-slate-50",
+        disabled || uploading ? "pointer-events-none opacity-60" : "",
+      ].join(" ")}
+    >
+      {uploading ? (
+        <>
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Uploading…
+        </>
+      ) : (
+        <>
+          <Upload className="h-3.5 w-3.5" />
+          Upload image or PDF
+        </>
+      )}
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        className="hidden"
+        disabled={disabled || uploading}
+        onChange={(e) =>
+          handleDocumentUpload(e.target.files?.[0] ?? null)
+        }
+      />
+    </label>
+
+    {value.documentUrl ? (
+      <DocumentPreview
+        url={value.documentUrl}
+        onClear={
+          disabled
+            ? undefined
+            : () => update("documentUrl", "")
+        }
+      />
+    ) : null}
+
+    {uploadError ? (
+      <p className="text-xs text-red-600">{uploadError}</p>
+    ) : null}
+  </div>
+</div> */}
+
+      {/* Document from Senders master only — no upload here */}
+      <div>
+        <label className={label}>Document file</label>
+        {value.documentUrl ? (
+          <DocumentPreview url={value.documentUrl} />
+        ) : (
+          <p className="text-xs text-slate-400">
+            No document. Upload under Masters → Senders, then select sender.
+          </p>
+        )}
       </div>
     </div>
   );

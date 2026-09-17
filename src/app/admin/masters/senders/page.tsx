@@ -1655,6 +1655,7 @@ type Sender = {
   iecNo?: string;
   documentType?: string;
   documentNo?: string;
+  documentUrl?: string;
   status: SenderStatus;
   createdAt?: string;
   updatedAt?: string;
@@ -1676,6 +1677,7 @@ type SenderForm = {
   iecNo: string;
   documentType: string;
   documentNo: string;
+  documentUrl: string;
   status: SenderStatus;
 };
 
@@ -1713,6 +1715,7 @@ const EMPTY_FORM: SenderForm = {
   iecNo: "",
   documentType: "",
   documentNo: "",
+  documentUrl: "",
   status: "ACTIVE",
 };
 
@@ -1762,6 +1765,7 @@ function normalizeSender(raw: Record<string, unknown>): Sender | null {
     iecNo: raw.iecNo ? String(raw.iecNo) : undefined,
     documentType: raw.documentType ? String(raw.documentType) : undefined,
     documentNo: raw.documentNo ? String(raw.documentNo) : undefined,
+    documentUrl: raw.documentUrl ? String(raw.documentUrl) : undefined,
     status: statusRaw === "INACTIVE" ? "INACTIVE" : "ACTIVE",
     createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
     updatedAt: raw.updatedAt ? String(raw.updatedAt) : undefined,
@@ -1802,6 +1806,7 @@ function toForm(sender?: Sender | null): SenderForm {
     iecNo: sender.iecNo || "",
     documentType: sender.documentType || "",
     documentNo: sender.documentNo || "",
+    documentUrl: sender.documentUrl || "",
     status: sender.status || "ACTIVE",
   };
 }
@@ -1823,6 +1828,7 @@ export default function SendersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Sender | null>(null);
   const [form, setForm] = useState<SenderForm>(EMPTY_FORM);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -1922,6 +1928,45 @@ export default function SendersPage() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  async function uploadSenderDocument(file: File | null) {
+  if (!file || !firebaseUser) return;
+  const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+  if (!allowed.includes(file.type)) {
+    setError("Only JPG, PNG, WebP, or PDF allowed.");
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    setError("File must be 10 MB or smaller.");
+    return;
+  }
+  try {
+    setUploadingDoc(true);
+    setError(null);
+    const token = await firebaseUser.getIdToken(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("context", "sender-document");
+    const res = await fetch("/api/uploads", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json?.error?.message || "Upload failed.");
+    }
+    const url = String(
+      json.data?.downloadUrl || json.data?.url || "",
+    ).trim();
+    if (!url) throw new Error("No download URL returned.");
+    updateForm("documentUrl", url);
+  } catch (e) {
+    setError(e instanceof Error ? e.message : "Upload failed.");
+  } finally {
+    setUploadingDoc(false);
+  }
+}
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
@@ -1977,6 +2022,7 @@ export default function SendersPage() {
         iecNo: form.iecNo.trim(),
         documentType: form.documentType.trim(),
         documentNo: form.documentNo.trim(),
+        documentUrl: form.documentUrl.trim() || null,
         status: form.status,
         ...(editing ? { senderId: editing.senderId } : {}),
       };
@@ -2418,8 +2464,41 @@ export default function SendersPage() {
                   required
                 />
               </div>
+                <div className="sm:col-span-2">
+                <label className={labelClass}>Document file (image / PDF)<span className="text-red-500"> *</span></label>
+                <label
+                  className={[
+                    "mt-1 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50",
+                    saving || uploadingDoc || !firebaseUser
+                      ? "pointer-events-none opacity-60"
+                      : "",
+                  ].join(" ")}
+                >
+                  {uploadingDoc ? "Uploading…" : "Upload image or PDF"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    className="hidden"
+                    disabled={saving || uploadingDoc || !firebaseUser}
+                    onChange={(e) =>
+                      uploadSenderDocument(e.target.files?.[0] ?? null)
+                    }
+                    required
+                  />
+                </label>
+                {form.documentUrl ? (
+                  <a
+                    href={form.documentUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-xs font-semibold text-[#087f87] hover:underline"
+                  >
+                    View uploaded document
+                  </a>
+                ) : null}
+              </div>
               <div>
-                <label className={labelClass}>Status *</label>
+                <label className={labelClass}>Status <span className="text-red-500">*</span></label>
                 <select
                   value={form.status}
                   onChange={(e) =>

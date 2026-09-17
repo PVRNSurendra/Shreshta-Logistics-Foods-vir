@@ -358,7 +358,7 @@ export default function OriginsPage() {
             <form onSubmit={onSubmit} className="mt-4 grid gap-3">
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  Name *
+                  Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.name}
@@ -372,7 +372,7 @@ export default function OriginsPage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  Code
+                  Code <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.code}
@@ -384,11 +384,12 @@ export default function OriginsPage() {
                   }
                   className={inputClass}
                   placeholder="e.g. GNT"
+                  required
                 />
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  Status *
+                  Status <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={form.status}

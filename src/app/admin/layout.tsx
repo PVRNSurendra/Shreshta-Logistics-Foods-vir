@@ -1471,6 +1471,30 @@ const logisticsLinks = [
   { label: "Settings", href: "/admin/logistics/settings" },
 ];
 
+// const masterLinks = [
+//   { label: "Senders", href: "/admin/masters/senders" },
+//   { label: "Receivers", href: "/admin/masters/receivers" },
+//   { label: "Origins", href: "/admin/masters/origins" },
+//   { label: "Destinations", href: "/admin/masters/destinations" },
+//   { label: "Vendors", href: "/admin/masters/vendors" },
+//   { label: "Services", href: "/admin/masters/services" },
+//   { label: "Country Metrics", href: "/admin/masters/countries" },
+//   { label: "Carrier Rates", href: "/admin/masters/carrier-rates" },
+  
+//   {
+//     label: "Proforma Items",
+//     href: "/admin/masters/proforma-items",
+//     adminOnly: true,
+//   },
+//   {
+//     label: "Currencies",
+//     href: "/admin/masters/currencies",
+//     adminOnly: true,
+//   },
+//   { label: "Products", href: "/admin/masters/products" },
+//   { label: "Flag charges", href: "/admin/logistics/flag-charges" },
+// ];
+
 const masterLinks = [
   { label: "Senders", href: "/admin/masters/senders" },
   { label: "Receivers", href: "/admin/masters/receivers" },
@@ -1478,7 +1502,8 @@ const masterLinks = [
   { label: "Destinations", href: "/admin/masters/destinations" },
   { label: "Vendors", href: "/admin/masters/vendors" },
   { label: "Services", href: "/admin/masters/services" },
-  { label: "Country Metrics", href: "/admin/masters/countries" },
+  { label: "Fuel Surcharges", href: "/admin/logistics/fuel-surcharges" },
+  { label: "Countries", href: "/admin/masters/countries" },
   { label: "Carrier Rates", href: "/admin/masters/carrier-rates" },
   
   {

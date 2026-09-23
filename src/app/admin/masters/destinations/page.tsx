@@ -778,7 +778,7 @@ const EMPTY_FORM: DestinationForm = {
   code: "",
   // city: "",
   state: "",
-  country: "India",
+  country: "",
   postalCode: "",
   // serviceCenter: "",
   status: "ACTIVE",
@@ -806,7 +806,7 @@ function normalizeDestination(
     code: raw.code ? String(raw.code) : undefined,
     // city: String(raw.city || "").trim(),
     state: raw.state ? String(raw.state) : undefined,
-    country: String(raw.country || "India").trim(),
+    country: String(raw.country || "").trim(),
     postalCode: raw.postalCode ? String(raw.postalCode) : undefined,
     // serviceCenter: raw.serviceCenter
     //   ? String(raw.serviceCenter)
@@ -1348,26 +1348,26 @@ export default function DestinationsPage() {
             <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Destination Name *
+                  Destination Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   value={form.name}
                   onChange={(e) => updateForm("name", e.target.value)}
                   className={inputClass}
-                  placeholder="e.g. Hyderabad"
+                  placeholder="United States"
                   required
                 />
               </div>
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Code
+                  Code 
                 </label>
                 <input
                   value={form.code}
                   onChange={(e) => updateForm("code", e.target.value)}
                   className={inputClass}
-                  placeholder="Optional code"
+                  placeholder="US"
                 />
               </div>
 
@@ -1386,7 +1386,7 @@ export default function DestinationsPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  State
+                  State <span className="text-red-400">*</span>
                 </label>
                 <input
                   value={form.state}
@@ -1398,7 +1398,7 @@ export default function DestinationsPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Country *
+                  Country <span className="text-red-400">*</span>
                 </label>
                 <input
                   value={form.country}

@@ -1463,10 +1463,10 @@ const logisticsLinks = [
   { label: "Tracking", href: "/admin/logistics/tracking" },
   { label: "Tracking Matrix", href: "/admin/logistics/tracking/matrix" },
   { label: "Day End", href: "/admin/logistics/day-end" },
-  { label: "Rate Compare", href: "/admin/logistics/rate-compare" },
+  // { label: "Rate Compare", href: "/admin/logistics/rate-compare" },
   { label: "Fuel Surcharges", href: "/admin/logistics/fuel-surcharges" },
   { label: "Co-loaders", href: "/admin/logistics/co-loaders" },
-  { label: "Invoices", href: "/admin/logistics/invoices" },
+  // { label: "Invoices", href: "/admin/logistics/invoices" },
   { label: "Reports", href: "/admin/logistics/reports" },
   { label: "Settings", href: "/admin/logistics/settings" },
 ];
@@ -1474,12 +1474,13 @@ const logisticsLinks = [
 const masterLinks = [
   { label: "Senders", href: "/admin/masters/senders" },
   { label: "Receivers", href: "/admin/masters/receivers" },
+  { label: "Origins", href: "/admin/masters/origins" },
   { label: "Destinations", href: "/admin/masters/destinations" },
   { label: "Vendors", href: "/admin/masters/vendors" },
   { label: "Services", href: "/admin/masters/services" },
   { label: "Country Metrics", href: "/admin/masters/countries" },
   { label: "Carrier Rates", href: "/admin/masters/carrier-rates" },
-  { label: "Origins", href: "/admin/masters/origins" },
+  
   {
     label: "Proforma Items",
     href: "/admin/masters/proforma-items",

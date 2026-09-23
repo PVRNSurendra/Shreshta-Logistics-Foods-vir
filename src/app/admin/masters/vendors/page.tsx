@@ -1082,17 +1082,32 @@ export default function VendorsPage() {
 
       const token = await firebaseUser.getIdToken(true);
 
+      // const payload = {
+      //   name,
+      //   code: form.code.trim() || undefined,
+      //   vendorType: form.vendorType.trim() || undefined,
+      //   contactPerson: form.contactPerson.trim() || undefined,
+      //   phone: form.phone.trim() || undefined,
+      //   email: form.email.trim() || undefined,
+      //   address: form.address.trim() || undefined,
+      //   city: form.city.trim() || undefined,
+      //   gstin: form.gstin.trim() || undefined,
+      //   bankDetails: form.bankDetails.trim() || undefined,
+      //   status: form.status,
+      //   ...(editing ? { vendorId: editing.vendorId } : {}),
+      // };
+
       const payload = {
         name,
-        code: form.code.trim() || undefined,
-        vendorType: form.vendorType.trim() || undefined,
-        contactPerson: form.contactPerson.trim() || undefined,
-        phone: form.phone.trim() || undefined,
-        email: form.email.trim() || undefined,
-        address: form.address.trim() || undefined,
-        city: form.city.trim() || undefined,
-        gstin: form.gstin.trim() || undefined,
-        bankDetails: form.bankDetails.trim() || undefined,
+        code: form.code.trim() || null,
+        vendorType: form.vendorType.trim() || null,
+        contactPerson: form.contactPerson.trim() || null,
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        address: form.address.trim() || null,
+        city: form.city.trim() || null,
+        gstin: form.gstin.trim() || null,
+        bankDetails: form.bankDetails.trim() || null,
         status: form.status,
         ...(editing ? { vendorId: editing.vendorId } : {}),
       };

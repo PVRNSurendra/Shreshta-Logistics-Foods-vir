@@ -1710,7 +1710,7 @@ const EMPTY_FORM: SenderForm = {
   city: "",
   state: "",
   postalCode: "",
-  country: "India",
+  country: "",
   gstin: "",
   iecNo: "",
   documentType: "",
@@ -1801,7 +1801,7 @@ function toForm(sender?: Sender | null): SenderForm {
     city: sender.city || "",
     state: sender.state || "",
     postalCode: sender.postalCode || "",
-    country: sender.country || "India",
+    country: sender.country || "",
     gstin: sender.gstin || "",
     iecNo: sender.iecNo || "",
     documentType: sender.documentType || "",
@@ -1977,19 +1977,19 @@ export default function SendersPage() {
       if (!firebaseUser) throw new Error("Authentication is required.");
 
       const required: Array<[keyof SenderForm, string]> = [
-        ["companyName", "Company name"],
+        // ["companyName", "Company name"],
         ["contactName", "Contact name"],
-        ["phone", "Telephone"],
+        // ["phone", "Telephone"],
         ["mobile", "Mobile"],
-        ["email", "Email"],
+        // ["email", "Email"],
         ["address", "Address 1"],
-        ["addressLine2", "Address 2"],
+        // ["addressLine2", "Address 2"],
         ["city", "City"],
         ["state", "State"],
         ["postalCode", "Pincode"],
         ["country", "Country"],
-        ["gstin", "GSTIN"],
-        ["iecNo", "IEC No."],
+        // ["gstin", "GSTIN"],
+        // ["iecNo", "IEC No."],
         ["documentType", "Document type"],
         ["documentNo", "Document number"],
       ];
@@ -2293,18 +2293,18 @@ export default function SendersPage() {
             <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>
-                  Company Name <span className="text-red-500">*</span>
+                  Company Name
                 </label>
                 <input
                   value={form.companyName}
                   onChange={(e) => updateForm("companyName", e.target.value)}
                   className={inputClass}
-                  required
+                  
                 />
               </div>
               <div>
                 <label className={labelClass}>
-                  Contact Name <span className="text-red-500">*</span>
+                  Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.contactName}
@@ -2316,6 +2316,7 @@ export default function SendersPage() {
               <div>
                 <label className={labelClass}>
                   Telephone <span className="text-red-500"></span>
+                  <span className="font-normal text-slate-400">(optional)</span>
                 </label>
                 <input
                   value={form.phone}
@@ -2334,33 +2335,35 @@ export default function SendersPage() {
                   required
                 />
               </div>
+              
               <div className="sm:col-span-2">
                 <label className={labelClass}>
-                  Email <span className="text-red-500">*</span>
+                  Email
                 </label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => updateForm("email", e.target.value)}
                   className={inputClass}
-                  required
+                  
                 />
               </div>
+
               <div className="sm:col-span-2">
                 <label className={labelClass}>
                   Address 1 <span className="text-red-500">*</span>
                 </label>
-                <textarea
+                <input
                   value={form.address}
                   onChange={(e) => updateForm("address", e.target.value)}
-                  rows={2}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#087f87] focus:ring-2 focus:ring-cyan-100"
+                  // className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#087f87] focus:ring-2 focus:ring-cyan-100"
+                  className={inputClass}
                   required
                 />
               </div>
               <div className="sm:col-span-2">
                 <label className={labelClass}>
-                  Address 2 <span className="text-red-500"></span>
+                  Address 2 <span className="font-normal text-slate-400">(optional)</span>
                 </label>
                 <input
                   value={form.addressLine2}
@@ -2414,7 +2417,7 @@ export default function SendersPage() {
               </div>
               <div>
                 <label className={labelClass}>
-                  GSTIN <span className="text-red-500">*</span>
+                  GSTIN 
                 </label>
                 <input
                   value={form.gstin}
@@ -2422,18 +2425,16 @@ export default function SendersPage() {
                     updateForm("gstin", e.target.value.toUpperCase())
                   }
                   className={inputClass}
-                  required
                 />
               </div>
               <div>
                 <label className={labelClass}>
-                  IEC No. <span className="text-red-500">*</span>
+                  IEC No. 
                 </label>
                 <input
                   value={form.iecNo}
                   onChange={(e) => updateForm("iecNo", e.target.value)}
                   className={inputClass}
-                  required
                 />
               </div>
               <div>
@@ -2465,7 +2466,7 @@ export default function SendersPage() {
                 />
               </div>
                 <div className="sm:col-span-2">
-                <label className={labelClass}>Document file (image / PDF)<span className="text-red-500"> *</span></label>
+                <label className={labelClass}>Document file (image / PDF)</label>
                 <label
                   className={[
                     "mt-1 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50",
@@ -2483,7 +2484,6 @@ export default function SendersPage() {
                     onChange={(e) =>
                       uploadSenderDocument(e.target.files?.[0] ?? null)
                     }
-                    required
                   />
                 </label>
                 {form.documentUrl ? (

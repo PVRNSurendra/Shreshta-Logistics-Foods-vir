@@ -1021,9 +1021,9 @@ function validatePayload(body: CreateSenderBody, partial = false) {
     if (!ok) errors.push(msg);
   };
 
-  if (!partial || body.companyName !== undefined) {
-    require(!!str(body.companyName), "Company name is required.");
-  }
+  // if (!partial || body.companyName !== undefined) {
+  //   require(!!str(body.companyName), "Company name is required.");
+  // }
 
   if (!partial || body.contactName !== undefined || body.name !== undefined) {
     require(
@@ -1048,13 +1048,13 @@ function validatePayload(body: CreateSenderBody, partial = false) {
     }
   }
 
-  if (!partial || body.email !== undefined) {
-    if (!str(body.email)) {
-      errors.push("Email is required.");
-    } else if (!isValidEmail(body.email!)) {
-      errors.push("Please enter a valid email address.");
-    }
-  }
+  // if (!partial || body.email !== undefined) {
+  //   if (!str(body.email)) {
+  //     errors.push("Email is required.");
+  //   } else if (!isValidEmail(body.email!)) {
+  //     errors.push("Please enter a valid email address.");
+  //   }
+  // }
 
   const address1 = str(body.addressLine1) || str(body.address);
   if (!partial || body.address !== undefined || body.addressLine1 !== undefined) {
@@ -1085,17 +1085,17 @@ function validatePayload(body: CreateSenderBody, partial = false) {
     require(!!str(body.country), "Country is required.");
   }
 
-  if (!partial || body.gstin !== undefined) {
-    if (!str(body.gstin)) {
-      errors.push("GSTIN is required.");
-    } else if (!isValidGSTIN(body.gstin!)) {
-      errors.push("Please enter a valid GSTIN.");
-    }
-  }
+  // if (!partial || body.gstin !== undefined) {
+  //   if (!str(body.gstin)) {
+  //     errors.push("GSTIN is required.");
+  //   } else if (!isValidGSTIN(body.gstin!)) {
+  //     errors.push("Please enter a valid GSTIN.");
+  //   }
+  // }
 
-  if (!partial || body.iecNo !== undefined) {
-    require(!!str(body.iecNo), "IEC No. is required.");
-  }
+  // if (!partial || body.iecNo !== undefined) {
+  //   require(!!str(body.iecNo), "IEC No. is required.");
+  // }
 
   if (!partial || body.documentType !== undefined) {
     require(!!str(body.documentType), "Document type is required.");
@@ -1332,21 +1332,21 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    if (body.companyName !== undefined) {
-      const c = str(body.companyName);
-      if (!c) {
-        return errorResponse(
-          "VALIDATION_ERROR",
-          "Company name is required.",
-          400,
-        );
-      }
-      patch.companyName = c;
-    }
+    // if (body.companyName !== undefined) {
+    //   const c = str(body.companyName);
+    //   if (!c) {
+    //     return errorResponse(
+    //       "VALIDATION_ERROR",
+    //       "Company name is required.",
+    //       400,
+    //     );
+    //   }
+    //   patch.companyName = c;
+    // }
 
-    if (body.phone !== undefined) patch.phone = str(body.phone);
+    // if (body.phone !== undefined) patch.phone = str(body.phone);
     if (body.mobile !== undefined) patch.mobile = optionalOrNull(body.mobile);
-    if (body.email !== undefined) patch.email = optionalOrNull(body.email);
+    // if (body.email !== undefined) patch.email = optionalOrNull(body.email);
 
     if (body.address !== undefined || body.addressLine1 !== undefined) {
       const a = str(body.addressLine1) || str(body.address);

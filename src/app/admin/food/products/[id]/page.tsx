@@ -2729,6 +2729,603 @@
 //   );
 // }
 
+// "use client";
+
+// import Link from "next/link";
+// import { useParams, useRouter } from "next/navigation";
+// import { useEffect, useState } from "react";
+// import { useAuth } from "@/context/AuthContext";
+// import { can } from "@/lib/permissions";
+
+// type ProductStatus = "ACTIVE" | "INACTIVE" | "DRAFT";
+
+// type Variant = {
+//   variantId: string;
+//   name: string;
+//   weight: string;
+//   price: string;
+//   stock: string;
+//   enabled: boolean;
+// };
+
+// type CategoryOption = {
+//   categoryId: string;
+//   name: string;
+//   slug: string;
+// };
+
+// type ProductForm = {
+//   productId: string;
+//   name: string;
+//   slug: string;
+//   categoryId: string;
+//   category: string;
+//   description: string;
+//   imageUrl: string;
+//   status: ProductStatus;
+//   featured: boolean;
+//   foodLicenseNumber: string;
+//   variants: Variant[];
+// };
+
+// type ApiListResponse =
+//   | { success: true; data: unknown }
+//   | { success: false; error: { code: string; message: string } };
+
+// type ApiMutationResponse =
+//   | { success: true; data?: unknown; message?: string }
+//   | { success: false; error: { code: string; message: string } };
+
+// type ApiUploadResponse =
+//   | {
+//       success: true;
+//       data: {
+//         downloadUrl?: string;
+//         url?: string;
+//       };
+//       message?: string;
+//     }
+//   | {
+//       success: false;
+//       error: { code: string; message: string };
+//     };
+
+// function slugify(value: string): string {
+//   return value
+//     .toLowerCase()
+//     .trim()
+//     .replace(/[^a-z0-9]+/g, "-")
+//     .replace(/(^-|-$)/g, "");
+// }
+
+// function extractList(data: unknown): Record<string, unknown>[] {
+//   if (Array.isArray(data)) return data as Record<string, unknown>[];
+//   if (!data || typeof data !== "object") return [];
+//   const obj = data as Record<string, unknown>;
+//   for (const key of ["products", "categories", "items", "results", "data"]) {
+//     if (Array.isArray(obj[key])) return obj[key] as Record<string, unknown>[];
+//   }
+//   return [];
+// }
+
+// function createEmptyVariant(index: number): Variant {
+//   return {
+//     variantId: `VAR-${String(index).padStart(3, "0")}`,
+//     name: "",
+//     weight: "",
+//     price: "",
+//     stock: "0",
+//     enabled: true,
+//   };
+// }
+
+// function createEmptyForm(productId: string): ProductForm {
+//   return {
+//     productId: productId === "new" ? "" : productId,
+//     name: "",
+//     slug: "",
+//     categoryId: "",
+//     category: "",
+//     description: "",
+//     imageUrl: "/images/default-product-placeholder.png",
+//     status: "ACTIVE",
+//     featured: false,
+//     foodLicenseNumber: "",
+//     variants: [
+//       createEmptyVariant(1),
+//       createEmptyVariant(2),
+//       createEmptyVariant(3),
+//     ],
+//   };
+// }
+
+// function normalizeVariant(
+//   raw: Record<string, unknown>,
+//   productId: string,
+//   index: number,
+// ): Variant {
+//   const enabled = raw.enabled === undefined ? true : Boolean(raw.enabled);
+
+//   const weightValue =
+//     raw.weight !== undefined && raw.weight !== null
+//       ? String(raw.weight)
+//       : "";
+
+//   const weightUnit = String(raw.weightUnit || "").toUpperCase();
+//   const weightLabel =
+//     weightValue && weightUnit
+//       ? `${weightValue}${
+//           weightUnit === "GRAM" ? "g" : weightUnit === "KG" ? "kg" : ""
+//         }`
+//       : String(raw.name || raw.label || weightValue || "");
+
+//   return {
+//     variantId: String(
+//       raw.variantId || raw.id || `${productId}-v${index + 1}`,
+//     ),
+//     name: String(raw.name || raw.label || weightLabel || ""),
+//     weight: weightLabel,
+//     price:
+//       raw.price === undefined || raw.price === null
+//         ? ""
+//         : String(raw.price),
+//     stock:
+//       raw.stock === undefined || raw.stock === null
+//         ? "0"
+//         : String(raw.stock),
+//     enabled,
+//   };
+// }
+
+// function normalizeProduct(raw: Record<string, unknown>): ProductForm | null {
+//   const productId = String(raw.productId || raw.id || "").trim();
+//   const name = String(raw.name || "").trim();
+//   if (!productId || !name) return null;
+
+//   const variantsRaw = Array.isArray(raw.variants)
+//     ? (raw.variants as Record<string, unknown>[])
+//     : [];
+
+//   const variants =
+//     variantsRaw.length > 0
+//       ? variantsRaw.map((variant, index) =>
+//           normalizeVariant(variant, productId, index),
+//         )
+//       : [createEmptyVariant(1)];
+
+//   const statusRaw = String(raw.status || "ACTIVE").toUpperCase();
+//   const status: ProductStatus =
+//     statusRaw === "INACTIVE"
+//       ? "INACTIVE"
+//       : statusRaw === "DRAFT"
+//         ? "DRAFT"
+//         : "ACTIVE";
+
+//   return {
+//     productId,
+//     name,
+//     slug: String(raw.slug || slugify(name) || productId),
+//     categoryId: String(raw.categoryId || ""),
+//     category: String(raw.categoryName || raw.category || ""),
+//     description: String(raw.description || ""),
+//     imageUrl: String(
+//       raw.imageUrl ||
+//         raw.image ||
+//         "/images/default-product-placeholder.png",
+//     ),
+//     status,
+//     featured: Boolean(raw.featured),
+//     foodLicenseNumber: String(
+//       raw.foodLicenseNumber || raw.fssaiNumber || raw.licenseNumber || "",
+//     ).trim(),
+//     variants,
+//   };
+// }
+
+// function parseWeight(input: string): {
+//   weight: number;
+//   weightUnit: "GRAM" | "KG";
+//   label: string;
+// } {
+//   const cleaned = input.trim().toLowerCase();
+//   const match = cleaned.match(/^(\d+(?:\.\d+)?)\s*(kg|g|gram|grams)?$/);
+
+//   if (!match) {
+//     return {
+//       weight: 0,
+//       weightUnit: "GRAM",
+//       label: input.trim() || "Variant",
+//     };
+//   }
+
+//   const value = Number(match[1]);
+//   const unit = match[2] || "g";
+
+//   if (unit === "kg") {
+//     return { weight: value, weightUnit: "KG", label: `${value} kg` };
+//   }
+
+//   return { weight: value, weightUnit: "GRAM", label: `${value} g` };
+// }
+
+// async function parseJsonResponse<T>(res: Response): Promise<T> {
+//   const text = await res.text();
+//   try {
+//     return JSON.parse(text) as T;
+//   } catch {
+//     throw new Error(
+//       res.status === 404
+//         ? "API route not found. Restart next dev after adding route files."
+//         : `API returned non-JSON (HTTP ${res.status}).`,
+//     );
+//   }
+// }
+
+// export default function ProductDetailPage() {
+//   const params = useParams<{ id: string }>();
+//   const router = useRouter();
+//   const { firebaseUser, user, loading: authLoading } = useAuth();
+
+//   const permUser = {
+//     userId: user?.userId ?? "",
+//     role: user?.role ?? null,
+//   };
+
+//   const canManage =
+//     can(permUser, "FOOD_PRODUCT_CREATE") ||
+//     can(permUser, "FOOD_PRODUCT_UPDATE");
+
+//   const routeId = String(params.id || "").trim();
+//   const isNew = routeId === "new";
+
+//   const [form, setForm] = useState<ProductForm>(() =>
+//     createEmptyForm(routeId || "new"),
+//   );
+//   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>(
+//     [],
+//   );
+//   const [loading, setLoading] = useState(!isNew);
+//   const [saving, setSaving] = useState(false);
+//   const [uploadingImage, setUploadingImage] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const [success, setSuccess] = useState<string | null>(null);
+
+//   useEffect(() => {
+//     if (authLoading) return;
+
+//     let cancelled = false;
+
+//     async function load() {
+//       try {
+//         setLoading(true);
+//         setError(null);
+//         setSuccess(null);
+
+//         const headers: HeadersInit = { Accept: "application/json" };
+//         if (firebaseUser) {
+//           headers.Authorization = `Bearer ${await firebaseUser.getIdToken(true)}`;
+//         }
+
+//         const categoriesRes = await fetch("/api/food/categories", {
+//           method: "GET",
+//           headers,
+//           cache: "no-store",
+//         });
+
+//         if (categoriesRes.ok) {
+//           const categoriesJson =
+//             await parseJsonResponse<ApiListResponse>(categoriesRes);
+//           if (categoriesJson.success) {
+//             const list = extractList(categoriesJson.data)
+//               .map((item) => {
+//                 const categoryId = String(
+//                   item.categoryId || item.id || "",
+//                 ).trim();
+//                 const name = String(item.name || "").trim();
+//                 if (!name) return null;
+//                 return {
+//                   categoryId: categoryId || `CAT-${slugify(name)}`,
+//                   name,
+//                   slug: String(item.slug || slugify(name)),
+//                 } satisfies CategoryOption;
+//               })
+//               .filter(Boolean) as CategoryOption[];
+
+//             if (!cancelled) {
+//               setCategoryOptions(
+//                 list
+//                   .filter((c) => c.name)
+//                   .sort((a, b) => a.name.localeCompare(b.name)),
+//               );
+//             }
+//           }
+//         }
+
+//         if (isNew) {
+//           if (!cancelled) setForm(createEmptyForm("new"));
+//           return;
+//         }
+
+//         const res = await fetch("/api/food/products", {
+//           method: "GET",
+//           headers,
+//           cache: "no-store",
+//         });
+
+//         const json = await parseJsonResponse<ApiListResponse>(res);
+
+//         if (!res.ok || !json.success) {
+//           throw new Error(
+//             !json.success ? json.error.message : "Failed to load product.",
+//           );
+//         }
+
+//         const list = extractList(json.data);
+//         const match =
+//           list.find(
+//             (item) =>
+//               String(item.productId || "") === routeId ||
+//               String(item.id || "") === routeId,
+//           ) || null;
+
+//         if (!match) throw new Error("Product not found.");
+
+//         const normalized = normalizeProduct(match);
+//         if (!normalized) throw new Error("Product data is invalid.");
+
+//         if (!cancelled) setForm(normalized);
+//       } catch (e) {
+//         if (!cancelled) {
+//           setError(
+//             e instanceof Error ? e.message : "Failed to load product.",
+//           );
+//         }
+//       } finally {
+//         if (!cancelled) setLoading(false);
+//       }
+//     }
+
+//     load();
+
+//     return () => {
+//       cancelled = true;
+//     };
+//   }, [authLoading, firebaseUser, isNew, routeId]);
+
+//   function updateField<K extends keyof ProductForm>(
+//     key: K,
+//     value: ProductForm[K],
+//   ) {
+//     setForm((current) => {
+//       const next = { ...current, [key]: value };
+//       if (key === "name" && isNew) {
+//         next.slug = slugify(String(value || ""));
+//       }
+//       return next;
+//     });
+//     setSuccess(null);
+//   }
+
+//   function onCategoryChange(categoryId: string) {
+//     const selected = categoryOptions.find(
+//       (item) => item.categoryId === categoryId,
+//     );
+//     setForm((current) => ({
+//       ...current,
+//       categoryId,
+//       category: selected?.name || "",
+//     }));
+//     setSuccess(null);
+//   }
+
+//   function updateVariant(
+//     index: number,
+//     key: keyof Variant,
+//     value: string | boolean,
+//   ) {
+//     setForm((current) => ({
+//       ...current,
+//       variants: current.variants.map((variant, i) =>
+//         i === index ? { ...variant, [key]: value } : variant,
+//       ),
+//     }));
+//     setSuccess(null);
+//   }
+
+//   function addVariant() {
+//     setForm((current) => ({
+//       ...current,
+//       variants: [
+//         ...current.variants,
+//         createEmptyVariant(current.variants.length + 1),
+//       ],
+//     }));
+//     setSuccess(null);
+//   }
+
+//   function removeVariant(index: number) {
+//     setForm((current) => {
+//       if (current.variants.length <= 1) return current;
+//       return {
+//         ...current,
+//         variants: current.variants.filter((_, i) => i !== index),
+//       };
+//     });
+//     setSuccess(null);
+//   }
+
+//   async function uploadProductImage(file: File) {
+//     if (!canManage) {
+//       setError("You do not have permission to upload images.");
+//       return;
+//     }
+//     if (!firebaseUser) {
+//       setError("Authentication is required to upload images.");
+//       return;
+//     }
+//     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+//       setError("Only JPG, PNG, or WebP images are allowed.");
+//       return;
+//     }
+//     if (file.size > 10 * 1024 * 1024) {
+//       setError("Image must be 10 MB or smaller.");
+//       return;
+//     }
+
+//     try {
+//       setUploadingImage(true);
+//       setError(null);
+//       setSuccess(null);
+
+//       const token = await firebaseUser.getIdToken(true);
+//       const body = new FormData();
+//       body.append("file", file);
+//       body.append("context", "food-product");
+//       body.append("ownerId", user?.userId || firebaseUser.uid);
+
+//       const res = await fetch("/api/uploads", {
+//         method: "POST",
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body,
+//       });
+
+//       const json = await parseJsonResponse<ApiUploadResponse>(res);
+
+//       if (!res.ok || !json.success) {
+//         throw new Error(
+//           !json.success
+//             ? json.error.message
+//             : "Failed to upload image.",
+//         );
+//       }
+
+//       const url = String(
+//         json.data.downloadUrl || json.data.url || "",
+//       ).trim();
+
+//       if (!url) {
+//         throw new Error("Upload succeeded but no image URL was returned.");
+//       }
+
+//       updateField("imageUrl", url);
+//       setSuccess("Image uploaded. Save the product to keep it.");
+//     } catch (e) {
+//       setError(
+//         e instanceof Error ? e.message : "Failed to upload image.",
+//       );
+//     } finally {
+//       setUploadingImage(false);
+//     }
+//   }
+
+//   async function saveProduct() {
+//     try {
+//       setSaving(true);
+//       setError(null);
+//       setSuccess(null);
+
+//       if (!canManage) {
+//         throw new Error("You do not have permission to save products.");
+//       }
+//       if (!firebaseUser) {
+//         throw new Error("Authentication is required to save products.");
+//       }
+//       if (!form.name.trim()) {
+//         throw new Error("Product name is required.");
+//       }
+//       if (!form.slug.trim()) {
+//         throw new Error("Product slug is required.");
+//       }
+//       if (!form.categoryId && !form.category.trim()) {
+//         throw new Error("Please select a category.");
+//       }
+
+//       const preparedVariants = form.variants
+//         .map((variant, index) => {
+//           const price = Number(variant.price);
+//           const stock = Number(variant.stock || 0);
+//           const parsed = parseWeight(variant.weight || variant.name);
+
+//           if (!Number.isFinite(price) || price < 0) return null;
+
+//           return {
+//             variantId:
+//               variant.variantId ||
+//               `VAR-${String(index + 1).padStart(3, "0")}`,
+//             name:
+//               variant.name.trim() ||
+//               parsed.label ||
+//               `Option ${index + 1}`,
+//             label:
+//               variant.name.trim() ||
+//               parsed.label ||
+//               `Option ${index + 1}`,
+//             weight: parsed.weight,
+//             weightUnit: parsed.weightUnit,
+//             price,
+//             stock: Number.isFinite(stock) ? Math.max(0, stock) : 0,
+//             enabled: variant.enabled,
+//           };
+//         })
+//         .filter(Boolean);
+
+//       if (preparedVariants.length === 0) {
+//         throw new Error(
+//           "At least one valid variant with price is required.",
+//         );
+//       }
+
+//       const token = await firebaseUser.getIdToken(true);
+
+//       const payload = {
+//         productId: form.productId || undefined,
+//         name: form.name.trim(),
+//         slug: form.slug.trim(),
+//         categoryId: form.categoryId || undefined,
+//         category: form.category.trim() || "General",
+//         categoryName: form.category.trim() || "General",
+//         description: form.description.trim(),
+//         imageUrl: form.imageUrl.trim(),
+//         status: form.status,
+//         featured: form.featured,
+//         foodLicenseNumber: form.foodLicenseNumber.trim(),
+//         variants: preparedVariants,
+//       };
+
+//       const res = await fetch("/api/food/products", {
+//         method: isNew ? "POST" : "PUT",
+//         headers: {
+//           Accept: "application/json",
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify(payload),
+//       });
+
+//       const json = await parseJsonResponse<ApiMutationResponse>(res);
+
+//       if (!res.ok || !json.success) {
+//         throw new Error(
+//           !json.success
+//             ? json.error.message
+//             : "Failed to save product.",
+//         );
+//       }
+
+//       // Always return to products list after successful save
+//       router.replace("/admin/food/products");
+//       return;
+//     } catch (e) {
+//       setError(
+//         e instanceof Error ? e.message : "Failed to save product.",
+//       );
+//     } finally {
+//       setSaving(false);
+//     }
+//   }
+
 "use client";
 
 import Link from "next/link";
@@ -2798,6 +3395,29 @@ function slugify(value: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+/** Google Drive share link → direct image URL */
+function toDriveDirectUrl(url: string): string {
+  const s = String(url || "").trim();
+  if (!s) return s;
+
+  // Already a direct uc link
+  if (s.includes("drive.google.com/uc?")) return s;
+
+  // https://drive.google.com/file/d/FILE_ID/view?...
+  const fileMatch = s.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (fileMatch?.[1]) {
+    return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+  }
+
+  // open?id=FILE_ID
+  const openMatch = s.match(/drive\.google\.com\/open\?[^#]*id=([^&]+)/);
+  if (openMatch?.[1]) {
+    return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
+  }
+
+  return s;
+}
+
 function extractList(data: unknown): Record<string, unknown>[] {
   if (Array.isArray(data)) return data as Record<string, unknown>[];
   if (!data || typeof data !== "object") return [];
@@ -2827,7 +3447,7 @@ function createEmptyForm(productId: string): ProductForm {
     categoryId: "",
     category: "",
     description: "",
-    imageUrl: "/images/default-product-placeholder.png",
+    imageUrl: "",
     status: "ACTIVE",
     featured: false,
     foodLicenseNumber: "",
@@ -2845,12 +3465,10 @@ function normalizeVariant(
   index: number,
 ): Variant {
   const enabled = raw.enabled === undefined ? true : Boolean(raw.enabled);
-
   const weightValue =
     raw.weight !== undefined && raw.weight !== null
       ? String(raw.weight)
       : "";
-
   const weightUnit = String(raw.weightUnit || "").toUpperCase();
   const weightLabel =
     weightValue && weightUnit
@@ -2858,7 +3476,6 @@ function normalizeVariant(
           weightUnit === "GRAM" ? "g" : weightUnit === "KG" ? "kg" : ""
         }`
       : String(raw.name || raw.label || weightValue || "");
-
   return {
     variantId: String(
       raw.variantId || raw.id || `${productId}-v${index + 1}`,
@@ -2908,10 +3525,12 @@ function normalizeProduct(raw: Record<string, unknown>): ProductForm | null {
     categoryId: String(raw.categoryId || ""),
     category: String(raw.categoryName || raw.category || ""),
     description: String(raw.description || ""),
-    imageUrl: String(
-      raw.imageUrl ||
-        raw.image ||
-        "/images/default-product-placeholder.png",
+    imageUrl: toDriveDirectUrl(
+      String(
+        raw.imageUrl ||
+          raw.image ||
+          "",
+      ),
     ),
     status,
     featured: Boolean(raw.featured),
@@ -2929,7 +3548,6 @@ function parseWeight(input: string): {
 } {
   const cleaned = input.trim().toLowerCase();
   const match = cleaned.match(/^(\d+(?:\.\d+)?)\s*(kg|g|gram|grams)?$/);
-
   if (!match) {
     return {
       weight: 0,
@@ -2937,14 +3555,11 @@ function parseWeight(input: string): {
       label: input.trim() || "Variant",
     };
   }
-
   const value = Number(match[1]);
   const unit = match[2] || "g";
-
   if (unit === "kg") {
     return { weight: value, weightUnit: "KG", label: `${value} kg` };
   }
-
   return { weight: value, weightUnit: "GRAM", label: `${value} g` };
 }
 
@@ -3053,7 +3668,6 @@ export default function ProductDetailPage() {
         });
 
         const json = await parseJsonResponse<ApiListResponse>(res);
-
         if (!res.ok || !json.success) {
           throw new Error(
             !json.success ? json.error.message : "Failed to load product.",
@@ -3086,7 +3700,6 @@ export default function ProductDetailPage() {
     }
 
     load();
-
     return () => {
       cancelled = true;
     };
@@ -3100,6 +3713,9 @@ export default function ProductDetailPage() {
       const next = { ...current, [key]: value };
       if (key === "name" && isNew) {
         next.slug = slugify(String(value || ""));
+      }
+      if (key === "imageUrl") {
+        next.imageUrl = toDriveDirectUrl(String(value || ""));
       }
       return next;
     });
@@ -3192,7 +3808,6 @@ export default function ProductDetailPage() {
       });
 
       const json = await parseJsonResponse<ApiUploadResponse>(res);
-
       if (!res.ok || !json.success) {
         throw new Error(
           !json.success
@@ -3204,7 +3819,6 @@ export default function ProductDetailPage() {
       const url = String(
         json.data.downloadUrl || json.data.url || "",
       ).trim();
-
       if (!url) {
         throw new Error("Upload succeeded but no image URL was returned.");
       }
@@ -3247,9 +3861,7 @@ export default function ProductDetailPage() {
           const price = Number(variant.price);
           const stock = Number(variant.stock || 0);
           const parsed = parseWeight(variant.weight || variant.name);
-
           if (!Number.isFinite(price) || price < 0) return null;
-
           return {
             variantId:
               variant.variantId ||
@@ -3287,7 +3899,7 @@ export default function ProductDetailPage() {
         category: form.category.trim() || "General",
         categoryName: form.category.trim() || "General",
         description: form.description.trim(),
-        imageUrl: form.imageUrl.trim(),
+        imageUrl: toDriveDirectUrl(form.imageUrl.trim()),
         status: form.status,
         featured: form.featured,
         foodLicenseNumber: form.foodLicenseNumber.trim(),
@@ -3305,7 +3917,6 @@ export default function ProductDetailPage() {
       });
 
       const json = await parseJsonResponse<ApiMutationResponse>(res);
-
       if (!res.ok || !json.success) {
         throw new Error(
           !json.success
@@ -3314,7 +3925,6 @@ export default function ProductDetailPage() {
         );
       }
 
-      // Always return to products list after successful save
       router.replace("/admin/food/products");
       return;
     } catch (e) {
@@ -3325,6 +3935,9 @@ export default function ProductDetailPage() {
       setSaving(false);
     }
   }
+
+  // ... rest of JSX unchanged from your file
+  // (keep the same return JSX you already have)
 
   if (loading || authLoading) {
     return (

@@ -8086,12 +8086,16 @@ function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
     data.shipper.pincode ||
     "";
   const originCode = data.originCode || data.shipper.originCode || "";
+  const senderId =
+    str(data.shipper.senderId).trim() || "WALKIN_SENDER";
+  const receiverId =
+    str(data.consignee.receiverId).trim() || "WALKIN_RECEIVER";
 
   return {
     ...(existingAwb ? { awb: existingAwb, existingAwb } : {}),
     customerId: data.customerId || data.accountCode || "WALKIN",
-    senderId: "WALKIN_SENDER",
-    receiverId: "WALKIN_RECEIVER",
+    senderId,
+    receiverId,
     customerName: data.customerName,
     customerCode: data.customerCode || data.accountCode || "",
     accountCode: data.accountCode,
@@ -8521,16 +8525,31 @@ export default function BookingPage() {
             ? str((awbRaw as Record<string, unknown>).awb, editAwb)
             : editAwb || "";
 
-      if (isEdit) {
+      // if (isEdit) {
+      //   setMessage(json.message || "AWB updated successfully.");
+      //   router.push(
+      //     ROUTES.ADMIN_LOGISTICS_AWB || "/admin/logistics/awb",
+      //   );
+      //   return;
+      // }
+
+      // setCreatedAwb(awb);
+      // setMessage(json.message || "AWB created successfully.");
+            if (isEdit) {
         setMessage(json.message || "AWB updated successfully.");
         router.push(
-          ROUTES.ADMIN_LOGISTICS_AWB || "/admin/logistics/awb",
+          `/admin/logistics/awb/${encodeURIComponent(editAwb)}`,
         );
         return;
       }
 
-      setCreatedAwb(awb);
-      setMessage(json.message || "AWB created successfully.");
+      if (!awb) {
+        setError("AWB was created but no AWB number was returned.");
+        return;
+      }
+
+      // Redirect to detail page, e.g. /admin/logistics/awb/2609230001
+      router.push(`/admin/logistics/awb/${encodeURIComponent(awb)}`);
     } catch (e) {
       console.error("Booking submit error:", e);
       setError(

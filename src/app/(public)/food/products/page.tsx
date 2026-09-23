@@ -1987,9 +1987,20 @@ export default function ProductsPage() {
                           </span>
                         )}
 
+                        {/* <img
+                          src={product.image}
+                          alt={product.name}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            opacity: product.inStock ? 1 : 0.55,
+                          }}
+                        /> */}
                         <img
                           src={product.image}
                           alt={product.name}
+                          referrerPolicy="no-referrer"
                           style={{
                             width: "100%",
                             height: "100%",

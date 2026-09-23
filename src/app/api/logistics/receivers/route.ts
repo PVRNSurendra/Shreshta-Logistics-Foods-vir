@@ -1094,9 +1094,9 @@ function validatePayload(body: CreateReceiverBody, partial = false) {
 
   const country = str(body.country) || undefined;
 
-  if (!partial || body.companyName !== undefined) {
-    require(!!str(body.companyName), "Company name is required.");
-  }
+  // if (!partial || body.companyName !== undefined) {
+  //   require(!!str(body.companyName), "Company name is required.");
+  // }
 
   if (!partial || body.contactName !== undefined || body.name !== undefined) {
     require(
@@ -1121,13 +1121,13 @@ function validatePayload(body: CreateReceiverBody, partial = false) {
     }
   }
 
-  if (!partial || body.email !== undefined) {
-    if (!str(body.email)) {
-      errors.push("Email is required.");
-    } else if (!isValidEmail(body.email!)) {
-      errors.push("Please enter a valid email address.");
-    }
-  }
+  // if (!partial || body.email !== undefined) {
+  //   if (!str(body.email)) {
+  //     errors.push("Email is required.");
+  //   } else if (!isValidEmail(body.email!)) {
+  //     errors.push("Please enter a valid email address.");
+  //   }
+  // }
 
   const address1 = str(body.addressLine1) || str(body.address);
   if (
@@ -1162,9 +1162,9 @@ function validatePayload(body: CreateReceiverBody, partial = false) {
     require(!!str(body.country), "Country is required.");
   }
 
-  if (str(body.gstin) && !isValidGSTIN(body.gstin!)) {
-    errors.push("Please enter a valid GSTIN.");
-  }
+  // if (str(body.gstin) && !isValidGSTIN(body.gstin!)) {
+  //   errors.push("Please enter a valid GSTIN.");
+  // }
 
   if (
     body.status !== undefined &&

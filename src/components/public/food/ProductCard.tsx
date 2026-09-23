@@ -71,7 +71,7 @@ export default function ProductCard({
 
   const image =
     product.image ||
-    "/images/default-product-placeholder.png";
+    "";
 
   const outOfStock =
     selectedVariant.stock !==
@@ -85,10 +85,18 @@ export default function ProductCard({
         href={`/food/products/${product.slug}`}
         className="relative block aspect-square overflow-hidden bg-gray-100"
       >
+        {/* <Image
+          src={image}
+          alt={product.name}
+          fill
+          className="object-cover transition duration-300 group-hover:scale-105"
+        /> */}
         <Image
           src={image}
           alt={product.name}
           fill
+          unoptimized
+          referrerPolicy="no-referrer"
           className="object-cover transition duration-300 group-hover:scale-105"
         />
 

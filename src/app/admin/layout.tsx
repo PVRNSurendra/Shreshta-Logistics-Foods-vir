@@ -1464,7 +1464,7 @@ const logisticsLinks = [
   { label: "Tracking Matrix", href: "/admin/logistics/tracking/matrix" },
   { label: "Day End", href: "/admin/logistics/day-end" },
   // { label: "Rate Compare", href: "/admin/logistics/rate-compare" },
-  { label: "Fuel Surcharges", href: "/admin/logistics/fuel-surcharges" },
+  // { label: "Fuel Surcharges", href: "/admin/logistics/fuel-surcharges" },
   { label: "Co-loaders", href: "/admin/logistics/co-loaders" },
   // { label: "Invoices", href: "/admin/logistics/invoices" },
   { label: "Reports", href: "/admin/logistics/reports" },

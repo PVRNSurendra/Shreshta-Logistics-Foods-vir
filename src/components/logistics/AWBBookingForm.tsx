@@ -58477,6 +58477,83 @@ export default function AWBBookingForm({
     editAwb,
   ]);
 
+    // Resolve service / product / co-loader codes when editing (names present, codes missing)
+  useEffect(() => {
+    if (!editAwb) return;
+
+    setData((prev) => {
+      let next = prev;
+      let changed = false;
+
+      if (!prev.serviceCode && prev.service && services.length > 0) {
+        const s = services.find(
+          (x) =>
+            x.name === prev.service ||
+            x.serviceId === prev.service ||
+            x.code === prev.service,
+        );
+        if (s?.code) {
+          next = { ...next, serviceCode: s.code };
+          changed = true;
+        }
+      }
+
+      if (!prev.productCode && prev.product && products.length > 0) {
+        const p = products.find(
+          (x) =>
+            x.name === prev.product ||
+            x.productId === prev.product ||
+            x.code === prev.product,
+        );
+        if (p?.code) {
+          next = { ...next, productCode: p.code };
+          changed = true;
+        }
+      }
+
+      if (!prev.accountCode && prev.customerName && coloaders.length > 0) {
+        const c = coloaders.find(
+          (x) =>
+            x.name === prev.customerName ||
+            x.contactPerson === prev.customerName ||
+            x.code === prev.customerCode,
+        );
+        if (c?.code) {
+          next = {
+            ...next,
+            accountCode: c.code,
+            customerCode: c.code,
+            customerName: c.name || c.contactPerson || prev.customerName,
+          };
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [editAwb, services, products, coloaders]);
+
+    useEffect(() => {
+    if (!editAwb || !coloaders.length) return;
+    setData((prev) => {
+      if (prev.accountCode) return prev;
+      const c = coloaders.find(
+        (x) =>
+          x.name === prev.customerName ||
+          x.contactPerson === prev.customerName ||
+          x.code === prev.customerCode,
+      );
+      if (!c?.code) return prev;
+      return {
+        ...prev,
+        accountCode: c.code,
+        customerCode: c.code,
+        customerId: c.id || prev.customerId,
+        customerName: c.name || c.contactPerson || prev.customerName,
+      };
+    });
+  }, [editAwb, coloaders]);
+
   useEffect(() => {
     if (!lockAccountFields) return;
     setData((prev) => ({
@@ -61232,18 +61309,43 @@ function handleDestinationSelect(name: string) {
                 className={inputLocked}
               />
             ) : coloaders.length > 0 ? (
-              <select
-                value={data.accountCode}
-                onChange={(e) => handleCoLoaderSelect(e.target.value)}
+            //   <select
+            //     value={data.accountCode}
+            //     onChange={(e) => handleCoLoaderSelect(e.target.value)}
+            //     className={input}
+            //   >
+            //     <option value="">Select co-loader</option>
+            //     {coloaders.map((c) => (
+            //       <option key={c.id} value={c.code}>
+            //         {c.code}
+            //       </option>
+            //     ))}
+            //   </select>
+
+            <select
+                value={data.accountCode || ""}
+                onChange={(e) => {
+                    const code = e.target.value;
+                    const c = coloaders.find(
+                    (x) => x.code === code || x.id === code,
+                    );
+                    setData((prev) => ({
+                    ...prev,
+                    accountCode: c?.code || code,
+                    customerCode: c?.code || code,
+                    customerId: c?.id || prev.customerId,
+                    customerName: c?.name || c?.contactPerson || prev.customerName,
+                    }));
+                }}
                 className={input}
-              >
+                >
                 <option value="">Select co-loader</option>
                 {coloaders.map((c) => (
-                  <option key={c.id} value={c.code}>
-                    {c.code}
-                  </option>
+                    <option key={c.id || c.code} value={c.code}>
+                    {c.code} — {c.name || c.contactPerson}
+                    </option>
                 ))}
-              </select>
+                </select>
             ) : (
               <input
                 value={data.accountCode}
@@ -61339,68 +61441,81 @@ function handleDestinationSelect(name: string) {
           </div>
           <div className="p-3">
             <div className="mb-3 grid grid-cols-2 gap-2">
-              <div>
-                <label className={label}>
-                  Destination{" "}
-                  <span className="text-red-400">*</span>
-                </label>
-                {destinations.length > 0 ? (
-                    <select
-                        value={
-                        destinations.find(
-                            (d) =>
-                            (Boolean(data.destination) && d.name === data.destination) ||
-                            (Boolean(data.destinationCode) &&
-                                d.code === data.destinationCode),
-                        )?.name || ""
-                        }
-                        onChange={(e) => handleDestinationSelect(e.target.value)}
-                        className={input}
-                    >
-                        <option value="">Select destination</option>
-                        {destinations.map((d) => (
-                        <option key={d.id} value={d.name}>
-                            {d.name}
-                            {d.code ? ` (${d.code})` : ""}
-                        </option>
-                        ))}
-                    </select>
-                    ) : (
-                  <div className="relative">
-                    <input
-                      value={data.destination}
-                      onChange={(e) => update("destination", e.target.value)}
-                      className={input}
-                    />
-                    <Search className="absolute right-2 top-2 h-4 w-4 text-gray-400" />
-                  </div>
-                )}
-              </div>
-              {/* <div>
-                <label className={label}>
-                  Dest. Code{" "}
-                  <span className="font-normal text-slate-400"></span>
-                </label>
-                <input
-                  value={data.destinationCode}
-                  readOnly
-                  onChange={(e) => update("destinationCode", e.target.value)}
-                  placeholder="Dest. Code"
-                  className={input}
-                />
-              </div> */}
+              {/* Destination + Dest. Code */}
+{(() => {
+  const destMatch = destinations.find((d) => {
+    const label = d.code ? `${d.name} (${d.code})` : d.name;
+    return (
+      label === data.destination ||
+      d.name === data.destination ||
+      d.code === data.destinationCode
+    );
+  });
+  const selectValue = destMatch
+    ? destMatch.code
+      ? `${destMatch.name} (${destMatch.code})`
+      : destMatch.name
+    : data.destination || "";
 
-              <div>
-                <label className={label}>
-                    Dest. Code
-                </label>
-                <input
-                    value={data.destinationCode}
-                    readOnly
-                    placeholder="Dest. Code"
-                    className={`${input} bg-gray-50`}
-                />
-            </div>
+  return (
+    <>
+      <div>
+        <label className={label}>
+          Destination <span className="text-red-500">*</span>
+        </label>
+        <select
+          value={selectValue}
+          onChange={(e) => {
+            const name = e.target.value;
+            const d = destinations.find((x) => {
+              const label = x.code ? `${x.name} (${x.code})` : x.name;
+              return (
+                label === name ||
+                x.name === name ||
+                x.code === name
+              );
+            });
+            setData((prev) => ({
+              ...prev,
+              destination: d
+                ? d.code
+                  ? `${d.name} (${d.code})`
+                  : d.name
+                : name,
+              destinationCode: d?.code || "",
+            }));
+          }}
+          className={input}
+        >
+          <option value="">Select destination</option>
+          {destinations.map((d) => {
+            const label = d.code ? `${d.name} (${d.code})` : d.name;
+            return (
+              <option key={d.id || d.code || d.name} value={label}>
+                {label}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+
+      <div>
+        <label className={label}>Dest. Code</label>
+        <input
+          value={data.destinationCode || ""}
+          onChange={(e) =>
+            setData((prev) => ({
+              ...prev,
+              destinationCode: e.target.value,
+            }))
+          }
+          className={input}
+          placeholder="Dest. Code"
+        />
+      </div>
+    </>
+  );
+})()}
             </div>
             <ConsigneeForm
               value={data.consignee}

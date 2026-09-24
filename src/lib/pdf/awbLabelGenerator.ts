@@ -7802,40 +7802,79 @@ export async function generateAwbLabelPdf(
     true,
   );
 
-  const logoW = 128;
-  const logoH = 44;
+  // const logoW = 128;
+  // const logoH = 44;
+  // const logoX = margin + (leftW - logoW) / 2;
+  // const logoY = y - 64;
+  // drawSreshtaLogo(page, logoImage, bold, font, logoX, logoY, logoW, logoH);
+
+  // drawText("SENDER'S SIGNATURE", margin + 5, y - 82, 7.5);
+  // page.drawLine({
+  //   start: { x: margin + 5, y: y - 94 },
+  //   end: { x: margin + leftW - 6, y: y - 94 },
+  //   thickness: 0.7,
+  //   color: black,
+  // });
+  // drawText("DATE", margin + 5, y - 108, 7.5);
+
+  // drawText("PROOF OF DELIVERY (POD)", margin + 5, y - 132, 8, true);
+  // drawText("RECEIVER'S SIGNATURE", margin + 5, y - 148, 7.5);
+  // page.drawLine({
+  //   start: { x: margin + 5, y: y - 160 },
+  //   end: { x: margin + leftW - 6, y: y - 160 },
+  //   thickness: 0.7,
+  //   color: black,
+  // });
+
+  // // Current date + time; only AM or only PM
+  // {
+  //   const pod = formatPodDateTime(data.printedAt);
+  //   drawText(`DATE  ${pod.date}`, margin + 5, y - 178, 6.5);
+  //   drawText(`TIME  ${pod.time} ${pod.meridiem}`, margin + 88, y - 178, 6.5);
+  // }
+  // drawText(
+  //   "(CAPITAL LETTERS VERY IMPORTANT)",
+  //   margin + 5,
+  //   y - 198,
+  //   5,
+  //   false,
+  //   gray,
+  // );
+
+    // Larger logo (fits leftW ≈ 186)
+  const logoW = 168;
+  const logoH = 62;
   const logoX = margin + (leftW - logoW) / 2;
-  const logoY = y - 64;
+  const logoY = y - 82;
   drawSreshtaLogo(page, logoImage, bold, font, logoX, logoY, logoW, logoH);
 
-  drawText("SENDER'S SIGNATURE", margin + 5, y - 82, 7.5);
+  drawText("SENDER'S SIGNATURE", margin + 5, y - 100, 7.5);
   page.drawLine({
-    start: { x: margin + 5, y: y - 94 },
-    end: { x: margin + leftW - 6, y: y - 94 },
+    start: { x: margin + 5, y: y - 112 },
+    end: { x: margin + leftW - 6, y: y - 112 },
     thickness: 0.7,
     color: black,
   });
-  drawText("DATE", margin + 5, y - 108, 7.5);
+  drawText("DATE", margin + 5, y - 126, 7.5);
 
-  drawText("PROOF OF DELIVERY (POD)", margin + 5, y - 132, 8, true);
-  drawText("RECEIVER'S SIGNATURE", margin + 5, y - 148, 7.5);
+  drawText("PROOF OF DELIVERY (POD)", margin + 5, y - 148, 8, true);
+  drawText("RECEIVER'S SIGNATURE", margin + 5, y - 164, 7.5);
   page.drawLine({
-    start: { x: margin + 5, y: y - 160 },
-    end: { x: margin + leftW - 6, y: y - 160 },
+    start: { x: margin + 5, y: y - 176 },
+    end: { x: margin + leftW - 6, y: y - 176 },
     thickness: 0.7,
     color: black,
   });
 
-  // Current date + time; only AM or only PM
   {
     const pod = formatPodDateTime(data.printedAt);
-    drawText(`DATE  ${pod.date}`, margin + 5, y - 178, 6.5);
-    drawText(`TIME  ${pod.time} ${pod.meridiem}`, margin + 88, y - 178, 6.5);
+    drawText(`DATE  ${pod.date}`, margin + 5, y - 192, 6.5);
+    drawText(`TIME  ${pod.time} ${pod.meridiem}`, margin + 88, y - 192, 6.5);
   }
   drawText(
-    "(CAPITAL LETTERS VERY IMPORTANT)",
+    "(CAPITAL LETTERS PLEASE IMPORTANT)",
     margin + 5,
-    y - 198,
+    y - 210,
     5,
     false,
     gray,

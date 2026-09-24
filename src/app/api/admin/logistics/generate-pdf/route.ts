@@ -1930,6 +1930,30 @@ export async function POST(request: NextRequest) {
         )
       : [];
 
+          // After `items` is built…
+    const contentFromItems = items
+      .map((it) => {
+        const desc = String(it.description || "").trim();
+        const shop = String(it.shopName || "").trim();
+        if (!desc && !shop) return "";
+        if (desc && shop) return `${desc} (${shop})`;
+        return desc || shop;
+      })
+      .filter(Boolean)
+      .join("; ");
+
+    const contentText =
+      contentFromItems ||
+      String(body.content || body.description || "").trim() ||
+      "USED CLOTHES";
+
+    const specialInstructions = String(
+      body.specialInstructions ||
+        body.instruction ||
+        body.instructions ||
+        "",
+    ).trim();
+
     const consigneePhone = String(
       body.consigneePhone ||
         body.consigneeMobile ||
@@ -1974,6 +1998,8 @@ export async function POST(request: NextRequest) {
       consigneeState: body.consigneeState || "",
       consigneePincode: body.consigneePincode || "",
       consigneePhone,
+      content: contentText,
+      specialInstructions,
       consigneeMobile: String(
         body.consigneeMobile || body.receiverMobile || consigneePhone,
       ).trim(),
@@ -2001,8 +2027,8 @@ export async function POST(request: NextRequest) {
         body.exportReason ||
         "UNSOLICITED GIFT - NOT FOR SALE",
       csbType: body.csbType || "CSB4",
-      content: body.content || "USED CLOTHES",
-      specialInstructions: body.specialInstructions || "",
+      // content: body.content || "USED CLOTHES",
+      // specialInstructions: body.specialInstructions || "",
       origin: body.origin || body.placeOfLoading || "GUNTUR",
       pieces: Number(body.pieces || body.totalPieces || 1),
       actualWeight: Number(body.actualWeight || 0),

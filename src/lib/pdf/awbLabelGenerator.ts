@@ -7050,6 +7050,42 @@ import {
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
+// export type AwbLabelData = {
+//   awb: string;
+//   accountCode?: string;
+//   bookDate?: string;
+//   printedAt?: string;
+//   shipperName: string;
+//   shipperAddress: string;
+//   shipperCity?: string;
+//   shipperState?: string;
+//   shipperPincode?: string;
+//   shipperPhone?: string;
+//   shipperCountry?: string;
+//   consigneeName: string;
+//   consigneeAddress: string;
+//   consigneeCity?: string;
+//   consigneeState?: string;
+//   consigneePincode?: string;
+//   consigneePhone?: string;
+//   consigneeCountry?: string;
+//   serviceType?: string;
+//   product?: string;
+//   vendor?: string;
+//   customerReference?: string;
+//   pieces: number;
+//   actualWeight: number;
+//   chargeableWeight: number;
+//   dimensions?: string;
+//   declaredValue?: number;
+//   currency?: string;
+//   content?: string;
+//   csbType?: string;
+//   specialInstructions?: string;
+//   origin?: string;
+// };
+
+
 export type AwbLabelData = {
   awb: string;
   accountCode?: string;
@@ -7068,6 +7104,7 @@ export type AwbLabelData = {
   consigneeState?: string;
   consigneePincode?: string;
   consigneePhone?: string;
+  consigneeMobile?: string; // NEW
   consigneeCountry?: string;
   serviceType?: string;
   product?: string;
@@ -7084,6 +7121,7 @@ export type AwbLabelData = {
   specialInstructions?: string;
   origin?: string;
 };
+
 
 /* ------------------------------------------------------------------ */
 /*  Code-128 Subset B                                                  */
@@ -7592,7 +7630,95 @@ export async function generateAwbLabelPdf(
     drawText(ch, margin + leftW + 2, y - 13 - i * 11.5, 7.5, true);
   });
 
-  const consX = margin + leftW + stripW + 4;
+  // const consX = margin + leftW + stripW + 4;
+  // drawText("2.", consX, y - 12, 8, true);
+  // drawText(
+  //   (data.consigneeName || "").toUpperCase(),
+  //   consX + 12,
+  //   y - 12,
+  //   8,
+  //   true,
+  // );
+
+  // let cy = y - 24;
+  // wrapText(data.consigneeAddress || "", 30)
+  //   .slice(0, 4)
+  //   .forEach((line) => {
+  //     drawText(line.toUpperCase(), consX, cy, 7);
+  //     cy -= 9.5;
+  //   });
+  // extraLocationLines(
+  //   data.consigneeAddress || "",
+  //   data.consigneeCity,
+  //   data.consigneeState,
+  //   data.consigneePincode,
+  // ).forEach((line) => {
+  //   if (cy < y - topH + 32) return;
+  //   drawText(line.toUpperCase(), consX, cy, 7);
+  //   cy -= 9.5;
+  // });
+  // if (cy >= y - topH + 22) {
+  //   drawText(
+  //     `Country : ${(data.consigneeCountry || "—").toUpperCase()}`,
+  //     consX,
+  //     cy,
+  //     7,
+  //   );
+  //   cy -= 9.5;
+  // }
+  // if (data.consigneePhone && cy >= y - topH + 11) {
+  //   drawText(String(data.consigneePhone), consX, cy, 7);
+  // }
+
+  //   const consX = margin + leftW + stripW + 4;
+  // drawText("2.", consX, y - 12, 8, true);
+  // drawText(
+  //   (data.consigneeName || "").toUpperCase(),
+  //   consX + 12,
+  //   y - 12,
+  //   8,
+  //   true,
+  // );
+
+  // // Keep space at bottom for phone so it never gets clipped
+  // const phoneReserve = 14;
+  // const addressBottom = y - topH + phoneReserve + 4;
+
+  // let cy = y - 24;
+  // wrapText(data.consigneeAddress || "", 30)
+  //   .slice(0, 4)
+  //   .forEach((line) => {
+  //     if (cy < addressBottom) return;
+  //     drawText(line.toUpperCase(), consX, cy, 7);
+  //     cy -= 9.5;
+  //   });
+  // extraLocationLines(
+  //   data.consigneeAddress || "",
+  //   data.consigneeCity,
+  //   data.consigneeState,
+  //   data.consigneePincode,
+  // ).forEach((line) => {
+  //   if (cy < addressBottom) return;
+  //   drawText(line.toUpperCase(), consX, cy, 7);
+  //   cy -= 9.5;
+  // });
+  // if (cy >= addressBottom) {
+  //   drawText(
+  //     `Country : ${(data.consigneeCountry || "—").toUpperCase()}`,
+  //     consX,
+  //     cy,
+  //     7,
+  //   );
+  // }
+
+  // // Always print mobile/phone at bottom of consignee box
+  // const consigneePhone = String(
+  //   data.consigneeMobile || data.consigneePhone || "",
+  // ).trim();
+  // if (consigneePhone) {
+  //   drawText(`Mob: ${consigneePhone}`, consX, y - topH + 6, 7.5, true);
+  // }
+    const consX = margin + leftW + stripW + 4;
   drawText("2.", consX, y - 12, 8, true);
   drawText(
     (data.consigneeName || "").toUpperCase(),
@@ -7604,7 +7730,7 @@ export async function generateAwbLabelPdf(
 
   let cy = y - 24;
   wrapText(data.consigneeAddress || "", 30)
-    .slice(0, 4)
+    .slice(0, 5)
     .forEach((line) => {
       drawText(line.toUpperCase(), consX, cy, 7);
       cy -= 9.5;
@@ -7615,22 +7741,18 @@ export async function generateAwbLabelPdf(
     data.consigneeState,
     data.consigneePincode,
   ).forEach((line) => {
-    if (cy < y - topH + 32) return;
+    if (cy < y - topH + 14) return;
     drawText(line.toUpperCase(), consX, cy, 7);
     cy -= 9.5;
   });
-  if (cy >= y - topH + 22) {
-    drawText(
-      `Country : ${(data.consigneeCountry || "—").toUpperCase()}`,
-      consX,
-      cy,
-      7,
-    );
-    cy -= 9.5;
+  // Mobile — same placement as shipper (next line after address)
+  const consigneePhone = String(
+    data.consigneeMobile || data.consigneePhone || "",
+  ).trim();
+  if (consigneePhone && cy >= y - topH + 11) {
+    drawText(consigneePhone, consX, cy, 7);
   }
-  if (data.consigneePhone && cy >= y - topH + 11) {
-    drawText(String(data.consigneePhone), consX, cy, 7);
-  }
+  
 
   const svcX = margin + leftW + midW;
   cell(svcX, y - topH, rightW, topH);

@@ -1163,6 +1163,7 @@ export default function TrackingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [forwardingNumber, setForwardingNumber] = useState("");
 
   useEffect(() => {
     const fromQuery = searchParams.get("awb");
@@ -1282,12 +1283,20 @@ export default function TrackingPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        // body: JSON.stringify({
+        //   awb: normalizedAwb,
+        //   status: normalizedStatus,
+        //   trackingStageId: normalizedStatus,
+        //   location: normalizedLocation,
+        //   remarks: remarks.trim() || undefined,
+        // }),
         body: JSON.stringify({
           awb: normalizedAwb,
           status: normalizedStatus,
           trackingStageId: normalizedStatus,
           location: normalizedLocation,
           remarks: remarks.trim() || undefined,
+          forwardingNumber: forwardingNumber.trim() || undefined,
         }),
       });
 
@@ -1407,6 +1416,13 @@ export default function TrackingPage() {
               value={location}
               onChange={setLocation}
               placeholder="City / hub"
+            />
+
+            <Field
+              label="Forwarding number"
+              value={forwardingNumber}
+              onChange={setForwardingNumber}
+              placeholder="Carrier / forwarding AWB"
             />
 
             <Field

@@ -8538,7 +8538,17 @@ function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
   // Exact values from the form dropdown — no predefined mapping
   const selectedService = String(data.service || data.product || "").trim();
   const selectedProduct = String(data.product || data.service || "").trim();
+    const contentFromItems = (data.items || [])
+    .map((it) => {
+      const d = String(it.description || "").trim();
+      const s = String(it.shopName || "").trim();
+      if (d && s) return `${d} (${s})`;
+      return d || s;
+    })
+    .filter(Boolean)
+    .join("; ");
 
+  
   return {
     ...(existingAwb ? { awb: existingAwb, existingAwb } : {}),
     customerId: data.customerId || data.accountCode || "WALKIN",
@@ -8570,8 +8580,11 @@ function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
     vendor: data.vendor,
     shipmentDate: data.bookDate,
     description: data.content || data.instruction,
-    content: data.content,
+    // content: data.content,
+    content: contentFromItems || data.content || "",
     instruction: data.instruction,
+    specialInstructions: data.instruction,
+    // instruction: data.instruction,
     shipper: {
       ...data.shipper,
       company: data.shipper.company,

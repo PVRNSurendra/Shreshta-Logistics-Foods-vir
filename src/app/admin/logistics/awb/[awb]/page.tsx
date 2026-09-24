@@ -4215,6 +4215,8 @@ type AwbDetail = {
   chargeableWeightKg: number;
   declaredValueNum: number;
   content?: string;
+  instruction?: string;
+  // csbType?: string;
   csbType?: string;
   exportReason?: string;
   vendor?: string;
@@ -4542,7 +4544,14 @@ function normalizeShipment(
     actualWeightKg,
     chargeableWeightKg,
     declaredValueNum,
-    content: text(shipment.content || shipment.exportReason, ""),
+    // content: text(shipment.content || shipment.exportReason, ""),
+    content: text(shipment.content || shipment.description, ""),
+    instruction: text(
+      shipment.instruction ||
+        shipment.specialInstructions ||
+        "",
+      "",
+    ),
     csbType: text(shipment.csbType, ""),
     exportReason: text(shipment.exportReason, ""),
     vendor: text(shipment.vendor || shipment.preCarriageBy, ""),
@@ -4815,10 +4824,24 @@ export default function AWBDetailPage() {
             ) ||
             0,
           currency: "INR",
+          // content:
+          //   detail.content ||
+          //   detail.exportReason ||
+          //   "UNSOLICITED GIFT - NOT FOR SALE",
           content:
+            (detail.items || [])
+              .map((it) => {
+                const d = String(it.description || "").trim();
+                const s = String(it.shopName || "").trim();
+                if (d && s) return `${d} (${s})`;
+                return d || s;
+              })
+              .filter(Boolean)
+              .join("; ") ||
             detail.content ||
-            detail.exportReason ||
-            "UNSOLICITED GIFT - NOT FOR SALE",
+            "USED CLOTHES",
+          specialInstructions: detail.instruction || "",
+          instruction: detail.instruction || "",
           csbType: detail.csbType || "CSB4",
           exportReason: detail.exportReason,
           items: detail.items,

@@ -60909,6 +60909,27 @@ function handleReceiverSelect(id: string) {
     }));
   }
 
+// function handleDestinationSelect(name: string) {
+//   if (!name) {
+//     setData((prev) => ({
+//       ...prev,
+//       destination: "",
+//       destinationCode: "",
+//     }));
+//     return;
+//   }
+
+//   const d = destinations.find(
+//     (x) => x.name === name || x.code === name || x.id === name,
+//   );
+
+//   setData((prev) => ({
+//     ...prev,
+//     destination: d?.name || name,
+//     destinationCode: d?.code || "",
+//   }));
+// }
+
 function handleDestinationSelect(name: string) {
   if (!name) {
     setData((prev) => ({
@@ -61463,7 +61484,7 @@ function handleDestinationSelect(name: string) {
         <label className={label}>
           Destination <span className="text-red-500">*</span>
         </label>
-        <select
+        {/* <select
           value={selectValue}
           onChange={(e) => {
             const name = e.target.value;
@@ -61496,7 +61517,31 @@ function handleDestinationSelect(name: string) {
               </option>
             );
           })}
-        </select>
+        </select> */}
+
+        <select
+            value={
+                data.destination &&
+                destinations.some(
+                (d) =>
+                    d.name === data.destination ||
+                    (Boolean(data.destinationCode) &&
+                    d.code === data.destinationCode),
+                )
+                ? data.destination
+                : ""
+            }
+            onChange={(e) => handleDestinationSelect(e.target.value)}
+            className={input}
+            >
+            <option value="">Select destination</option>
+            {destinations.map((d) => (
+                <option key={d.id} value={d.name}>
+                {d.name}
+                {d.code ? ` (${d.code})` : ""}
+                </option>
+            ))}
+            </select>
       </div>
 
       <div>
@@ -62383,13 +62428,43 @@ function handleDestinationSelect(name: string) {
           currencySymbol={selectedCurrency.symbol}
         />
 
+        {/* <div>
+        <label className="text-sm font-semibold text-slate-800">Special Instructions</label>
+        <input
+            value={data.instruction}
+            onChange={(e) => update("instruction", e.target.value)}
+            className={input}
+            placeholder="Shown on AWB label"
+        />
+        </div> */}
+
+        <div className={card}>
+        <div className="border-b bg-slate-50 px-4 py-2">
+          <span className="text-sm font-semibold text-slate-800">
+            Special Instructions
+          </span>
+        </div>
+        <div className="p-4">
+          <p className="mb-2 text-xs text-slate-500">
+            Optional. Shown on the AWB label under Special Instructions.
+          </p>
+          <textarea
+            value={data.instruction || ""}
+            onChange={(e) => update("instruction", e.target.value)}
+            className={`${input} min-h-[88px] py-2`}
+            placeholder="Shown on AWB label"
+            rows={3}
+          />
+        </div>
+      </div>
+
       <div className={card}>
         <div className="border-b bg-slate-50 px-4 py-2">
           <span className="text-sm font-semibold text-slate-800">
             Shipment Details
           </span>
         </div>
-        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className={label}>Payment Type *</label>
             <select
@@ -62420,14 +62495,7 @@ function handleDestinationSelect(name: string) {
               className={input}
             />
           </div>
-          <div>
-            <label className={label}>Instruction</label>
-            <input
-              value={data.instruction}
-              onChange={(e) => update("instruction", e.target.value)}
-              className={input}
-            />
-          </div>
+          
         </div>
       </div>
 

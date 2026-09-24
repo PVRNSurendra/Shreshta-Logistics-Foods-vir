@@ -4432,7 +4432,11 @@ function normalizeShipment(
         .filter(Boolean)
         .join(", ") || shipment.senderAddress,
     ),
-    senderPhone: text(sender.phone || shipment.senderPhone),
+    // senderPhone: text(sender.phone || shipment.senderPhone),
+    senderPhone: text(
+      sender.mobile || sender.phone || shipment.senderPhone || shipment.senderMobile,
+      "",
+    ),
     senderCity: text(sender.city, ""),
     senderState: text(sender.state, ""),
     senderPincode: text(sender.pincode || sender.postalCode, ""),
@@ -4447,7 +4451,14 @@ function normalizeShipment(
         .filter(Boolean)
         .join(", ") || shipment.receiverAddress,
     ),
-    receiverPhone: text(receiver.phone || shipment.receiverPhone),
+    // receiverPhone: text(receiver.phone || shipment.receiverPhone),
+    receiverPhone: text(
+      receiver.mobile ||
+        receiver.phone ||
+        shipment.receiverPhone ||
+        shipment.receiverMobile,
+      "",
+    ),
     receiverCity: text(receiver.city, ""),
     receiverState: text(receiver.state, ""),
     receiverPincode: text(receiver.pincode || receiver.postalCode, ""),
@@ -4653,12 +4664,70 @@ export default function AWBDetailPage() {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
-        body: JSON.stringify({
+        // body: JSON.stringify({
+        //   type,
+        //   awb: detail.awb,
+        //   accountCode: detail.accountCode,
+        //   customerName: detail.customerName,
+        //   customerCode: detail.accountCode,
+        //   customerReference: detail.customerName,
+        //   bookDate: detail.bookDate,
+        //   shipperName: detail.senderName,
+        //   shipperAddress: detail.senderAddress,
+        //   shipperCity: detail.senderCity,
+        //   shipperState: detail.senderState,
+        //   shipperPincode: detail.senderPincode,
+        //   shipperPhone: detail.senderPhone,
+        //   shipperCountry: detail.senderCountry,
+        //   shipperTaxId: detail.senderTaxId,
+        //   consigneeName: detail.receiverName,
+        //   consigneeAddress: detail.receiverAddress,
+        //   consigneeCity: detail.receiverCity,
+        //   consigneeState: detail.receiverState,
+        //   consigneePincode: detail.receiverPincode,
+        //   consigneePhone: detail.receiverPhone,
+        //   consigneeCountry: detail.receiverCountry,
+        //   destination: detail.destination,
+        //   serviceType: detail.service,
+        //   vendor: detail.vendor,
+        //   origin: detail.origin,
+        //   pieces: detail.piecesCount || 1,
+        //   actualWeight: detail.actualWeightKg || 0,
+        //   chargeableWeight:
+        //     detail.chargeableWeightKg || detail.actualWeightKg || 0,
+        //   declaredValue:
+        //     detail.declaredValueNum ||
+        //     (detail.items || []).reduce(
+        //       (s, it) => s + Number(it.amount || 0),
+        //       0,
+        //     ) ||
+        //     0,
+        //   currency: "INR",
+        //   content:
+        //     detail.content ||
+        //     detail.exportReason ||
+        //     "UNSOLICITED GIFT - NOT FOR SALE",
+        //   csbType: detail.csbType || "CSB4",
+        //   exportReason: detail.exportReason,
+        //   items: detail.items,
+        //   totalAmount:
+        //     detail.totalRaw ||
+        //     (detail.items || []).reduce(
+        //       (s, it) => s + Number(it.amount || 0),
+        //       0,
+        //     ) ||
+        //     0,
+        //   forwardingNo: detail.awb,
+        //   manifestNo: detail.accountCode || detail.awb,
+        // }),
+
+                body: JSON.stringify({
           type,
           awb: detail.awb,
           accountCode: detail.accountCode,
           customerName: detail.customerName,
           customerCode: detail.accountCode,
+          customerReference: detail.customerName, // co-loader name on label
           bookDate: detail.bookDate,
           shipperName: detail.senderName,
           shipperAddress: detail.senderAddress,
@@ -4674,6 +4743,7 @@ export default function AWBDetailPage() {
           consigneeState: detail.receiverState,
           consigneePincode: detail.receiverPincode,
           consigneePhone: detail.receiverPhone,
+          consigneeMobile: detail.receiverPhone,
           consigneeCountry: detail.receiverCountry,
           destination: detail.destination,
           serviceType: detail.service,

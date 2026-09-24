@@ -7812,29 +7812,29 @@ async function buildAuthHeaders(
   return headers;
 }
 
-function deriveServiceType(product: string, destination: string): string {
-  const p = (product || "").toUpperCase();
-  const d = (destination || "").toUpperCase();
+// function deriveServiceType(product: string, destination: string): string {
+//   const p = (product || "").toUpperCase();
+//   const d = (destination || "").toUpperCase();
 
-  if (
-    p.includes("INTERNATIONAL") ||
-    ["USA", "UK", "UAE", "CANADA", "AUSTRALIA", "U.S.A"].some((x) =>
-      d.includes(x),
-    )
-  ) {
-    return "INTERNATIONAL";
-  }
+//   if (
+//     p.includes("INTERNATIONAL") ||
+//     ["USA", "UK", "UAE", "CANADA", "AUSTRALIA", "U.S.A"].some((x) =>
+//       d.includes(x),
+//     )
+//   ) {
+//     return "INTERNATIONAL";
+//   }
 
-  if (p.includes("CARGO") || p.includes("FREIGHT")) {
-    return "CARGO";
-  }
+//   if (p.includes("CARGO") || p.includes("FREIGHT")) {
+//     return "CARGO";
+//   }
 
-  if (p.includes("EXPRESS")) {
-    return "EXPRESS";
-  }
+//   if (p.includes("EXPRESS")) {
+//     return "EXPRESS";
+//   }
 
-  return "DOMESTIC";
-}
+//   return "DOMESTIC";
+// }
 
 function asRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -7878,6 +7878,206 @@ function extractList(data: unknown): Record<string, unknown>[] {
   return [];
 }
 
+// function mapAwbDocToForm(
+//   raw: Record<string, unknown>,
+// ): Partial<AWBBookingData> {
+//   const shipper = asRecord(raw.shipper ?? raw.sender);
+//   const consignee = asRecord(raw.consignee ?? raw.receiver);
+//   const charges = asRecord(raw.charges);
+
+//   const origin = str(
+//     shipper.origin ?? raw.origin ?? shipper.city ?? raw.senderCity,
+//   );
+//   const originCode = str(
+//     shipper.originCode ?? raw.originCode ?? shipper.cityCode,
+//   );
+
+//   const piecesRaw = Array.isArray(raw.pieces) ? raw.pieces : [];
+//   const pieces = piecesRaw.map((p, i) => {
+//     const row = asRecord(p);
+//     const dims = asRecord(row.dimensions);
+//     return {
+//       quantity: num(row.quantity, 1),
+//       weightKg: num(
+//         row.weightKg ?? row.actualWeightKg ?? row.actualWeight,
+//         0,
+//       ),
+//       lengthCm: num(row.lengthCm ?? dims.length, 0),
+//       widthCm: num(row.widthCm ?? dims.width, 0),
+//       heightCm: num(row.heightCm ?? dims.height, 0),
+//       description: str(row.description, `Piece ${i + 1}`),
+//       division: num(row.division, 0) || undefined,
+//     };
+//   });
+
+//   const itemsRaw = Array.isArray(raw.items) ? raw.items : [];
+//   const items = itemsRaw.map((item, i) => {
+//     const row = asRecord(item);
+//     return {
+//       description: str(row.description, `Item ${i + 1}`),
+//       quantity: num(row.quantity, 1),
+//       rate: num(row.rate ?? row.unitRate, 0),
+//       amount: num(row.amount, 0),
+//       hsCode: str(row.hsCode),
+//       shopName: str(row.shopName),
+//       shopAddress: str(row.shopAddress),
+//       boxNo: str(row.boxNo, "BOX_1"),
+//     };
+//   });
+
+//   const fallbackPieces =
+//     pieces.length > 0
+//       ? pieces
+//       : [
+//           {
+//             quantity: num(raw.totalPieces, 1) || 1,
+//             weightKg: num(raw.actualWeight ?? raw.actualWeightKg, 0),
+//             lengthCm: 0,
+//             widthCm: 0,
+//             heightCm: 0,
+//             description: "Piece 1",
+//           },
+//         ];
+
+//   const additionalCharges = Array.isArray(charges.additionalCharges)
+//     ? charges.additionalCharges
+//     : [];
+
+//   const shipperName = str(
+//     shipper.name ?? shipper.companyName ?? raw.senderName,
+//   );
+//   const shipperCompany = str(
+//     shipper.company ?? shipper.companyName ?? raw.senderCompany,
+//   );
+
+//   return {
+//     customerId: str(raw.customerId),
+//     customerName: str(raw.customerName),
+//     customerCode: str(raw.customerCode),
+//     accountCode: str(raw.accountCode),
+//     origin,
+//     originCode,
+//     destination: str(raw.destination),
+//     destinationCode: str(raw.destinationCode),
+//     product: str(raw.product ?? raw.serviceType),
+//     vendor: str(raw.vendor),
+//     service: str(raw.service ?? raw.serviceId) || "SELF",
+//     bookDate:
+//       str(raw.shipmentDate ?? raw.bookDate).slice(0, 10) || undefined,
+//     content: str(raw.description ?? raw.content),
+//     instruction: str(raw.instruction),
+//     shipper: {
+//       name: shipperName,
+//       company: shipperCompany,
+//       contactName: str(
+//         shipper.contactName ?? shipper.contact ?? shipperName,
+//       ),
+//       addressLine1: str(
+//         shipper.addressLine1 ?? shipper.address ?? raw.senderAddress,
+//       ),
+//       addressLine2: str(shipper.addressLine2),
+//       city: str(shipper.city ?? raw.senderCity),
+//       state: str(shipper.state ?? raw.senderState),
+//       pincode: str(
+//         shipper.pincode ?? shipper.postalCode ?? raw.senderPincode,
+//       ),
+//       country: str(shipper.country ?? raw.senderCountry, "India"),
+//       phone: str(shipper.phone ?? raw.senderPhone),
+//       mobile: str(shipper.mobile),
+//       email: str(shipper.email),
+//       gstin: str(shipper.gstin ?? raw.senderTaxId ?? raw.gstin),
+//       iecNo: str(shipper.iecNo),
+//       documentType: str(shipper.documentType),
+//       documentNo: str(shipper.documentNo),
+//       origin,
+//       originCode,
+//     },
+//     consignee: {
+//       name: str(
+//         consignee.name ?? consignee.companyName ?? raw.receiverName,
+//       ),
+//       company: str(
+//         consignee.company ??
+//           consignee.companyName ??
+//           raw.receiverCompany,
+//       ),
+//       contactName: str(
+//         consignee.contactName ??
+//           consignee.contact ??
+//           consignee.name ??
+//           raw.receiverName,
+//       ),
+//       addressLine1: str(
+//         consignee.addressLine1 ??
+//           consignee.address ??
+//           raw.receiverAddress,
+//       ),
+//       addressLine2: str(consignee.addressLine2),
+//       city: str(consignee.city ?? raw.receiverCity),
+//       state: str(consignee.state ?? raw.receiverState),
+//       pincode: str(
+//         consignee.pincode ??
+//           consignee.postalCode ??
+//           raw.receiverPincode,
+//       ),
+//       country: str(consignee.country ?? raw.receiverCountry, ""),
+//       phone: str(consignee.phone ?? raw.receiverPhone),
+//       mobile: str(consignee.mobile),
+//       email: str(consignee.email),
+//       gstin: str(consignee.gstin),
+//       iecNo: str(consignee.iecNo),
+//       documentType: str(consignee.documentType),
+//       documentNo: str(consignee.documentNo),
+//       documentUrl: str(consignee.documentUrl),
+//     },
+//     pieces: fallbackPieces as unknown as AWBBookingData["pieces"],
+//     items: items as unknown as AWBBookingData["items"],
+//     csbType: str(raw.csbType) || "CSB4",
+//     termOfInvoice: str(raw.termOfInvoice) || "CIF",
+//     exportReason:
+//       str(raw.exportReason) || "UNSOLICITED GIFT - NOT FOR SALE",
+//     gstInvoice: Boolean(raw.gstInvoice),
+//     invoiceNo: str(raw.invoiceNo),
+//     invoiceDate: str(raw.invoiceDate).slice(0, 10) || undefined,
+//     departmentNo: str(raw.departmentNo),
+//     format: str(raw.format) || "performainv1",
+//     charges: {
+//       freight: num(charges.freight ?? raw.freight, 0),
+//       fuelSurcharge: num(
+//         charges.fuelSurcharge ?? raw.fuelSurcharge,
+//         0,
+//       ),
+//       additionalCharges:
+//         additionalCharges as unknown as AWBBookingData["charges"]["additionalCharges"],
+//       otherCharges: num(charges.otherCharges ?? raw.otherCharges, 0),
+//       contractCharges: num(charges.contractCharges, 0),
+//       surcharge: num(charges.surcharge, 0),
+//       discount: num(charges.discount ?? raw.discount, 0),
+//       cgst: num(charges.cgst, 0),
+//       sgst: num(charges.sgst, 0),
+//       igst: num(charges.igst ?? charges.tax ?? raw.tax, 0),
+//     },
+//     paymentType: str(raw.paymentType) || "Credit",
+//     referenceNo: str(raw.referenceNo ?? raw.awb),
+//     commercial: Boolean(raw.commercial),
+//     oda: Boolean(raw.oda),
+//     medicalCharges: Boolean(raw.medicalCharges),
+//     totalPieces: num(raw.totalPieces, fallbackPieces.length || 1),
+//     packageType: str(raw.packageType) || "PKT",
+//     actualWeight: num(raw.actualWeight ?? raw.actualWeightKg, 0),
+//     volumetricWeight: num(
+//       raw.volumetricWeight ?? raw.volumetricWeightKg,
+//       0,
+//     ),
+//     chargeableWeight: num(
+//       raw.chargeableWeight ?? raw.chargeableWeightKg,
+//       0,
+//     ),
+//     shipmentValue: num(raw.shipmentValue ?? raw.declaredValue, 0),
+//     currency: asCurrency(raw.currency),
+//   };
+// }
+
 function mapAwbDocToForm(
   raw: Record<string, unknown>,
 ): Partial<AWBBookingData> {
@@ -7890,6 +8090,19 @@ function mapAwbDocToForm(
   );
   const originCode = str(
     shipper.originCode ?? raw.originCode ?? shipper.cityCode,
+  );
+
+  const destination = str(
+    raw.destination ?? consignee.city ?? consignee.country,
+  );
+  const destinationCode = str(
+    raw.destinationCode ?? consignee.destinationCode,
+  );
+  const consigneeCountry = str(
+    consignee.country ??
+      raw.receiverCountry ??
+      raw.destinationCountry ??
+      "",
   );
 
   const piecesRaw = Array.isArray(raw.pieces) ? raw.pieces : [];
@@ -7957,8 +8170,8 @@ function mapAwbDocToForm(
     accountCode: str(raw.accountCode),
     origin,
     originCode,
-    destination: str(raw.destination),
-    destinationCode: str(raw.destinationCode),
+    destination,
+    destinationCode,
     product: str(raw.product ?? raw.serviceType),
     vendor: str(raw.vendor),
     service: str(raw.service ?? raw.serviceId) || "SELF",
@@ -8013,14 +8226,14 @@ function mapAwbDocToForm(
           raw.receiverAddress,
       ),
       addressLine2: str(consignee.addressLine2),
-      city: str(consignee.city ?? raw.receiverCity),
+      city: str(consignee.city ?? raw.receiverCity ?? destination),
       state: str(consignee.state ?? raw.receiverState),
       pincode: str(
         consignee.pincode ??
           consignee.postalCode ??
           raw.receiverPincode,
       ),
-      country: str(consignee.country ?? raw.receiverCountry, ""),
+      country: consigneeCountry,
       phone: str(consignee.phone ?? raw.receiverPhone),
       mobile: str(consignee.mobile),
       email: str(consignee.email),
@@ -8078,6 +8291,192 @@ function mapAwbDocToForm(
   };
 }
 
+// function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
+//   const origin =
+//     data.origin ||
+//     data.shipper.origin ||
+//     data.shipper.city ||
+//     data.shipper.pincode ||
+//     "";
+//   const originCode = data.originCode || data.shipper.originCode || "";
+//   const senderId =
+//     str(data.shipper.senderId).trim() || "WALKIN_SENDER";
+//   const receiverId =
+//     str(data.consignee.receiverId).trim() || "WALKIN_RECEIVER";
+
+//   return {
+//     ...(existingAwb ? { awb: existingAwb, existingAwb } : {}),
+//     customerId: data.customerId || data.accountCode || "WALKIN",
+//     senderId,
+//     receiverId,
+//     customerName: data.customerName,
+//     customerCode: data.customerCode || data.accountCode || "",
+//     accountCode: data.accountCode,
+//     origin,
+//     originCode,
+//     destination:
+//       data.destination || data.consignee.city || data.consignee.country,
+//     destinationCode: data.destinationCode,
+//     serviceType: deriveServiceType(data.product, data.destination),
+//     product: data.product,
+//     vendor: data.vendor,
+//     serviceId: data.service || data.product || "SELF",
+//     service: data.service,
+//     shipmentDate: data.bookDate,
+//     description: data.content || data.instruction,
+//     content: data.content,
+//     instruction: data.instruction,
+//     shipper: {
+//       ...data.shipper,
+//       company: data.shipper.company,
+//       companyName: data.shipper.company,
+//       contactName: data.shipper.contactName,
+//       origin,
+//       originCode,
+//     },
+//     consignee: {
+//       ...data.consignee,
+//       company: data.consignee.company,
+//       companyName: data.consignee.company,
+//       contactName: data.consignee.contactName,
+//     },
+//     pieces: (data.pieces || []).map((p, i) => ({
+//       quantity: Number(p.quantity) || 1,
+//       actualWeightKg: Number(p.weightKg) || 0,
+//       lengthCm: Number(p.lengthCm) || 0,
+//       widthCm: Number(p.widthCm) || 0,
+//       heightCm: Number(p.heightCm) || 0,
+//       description: p.description?.trim() || `Piece ${i + 1}`,
+//       division: Number(p.division) || undefined,
+//     })),
+//     gstin: data.shipper.gstin || undefined,
+//     csbType: data.csbType,
+//     termOfInvoice: data.termOfInvoice,
+//     exportReason: data.exportReason,
+//     gstInvoice: data.gstInvoice,
+//     invoiceNo: data.invoiceNo,
+//     invoiceDate: data.invoiceDate,
+//     departmentNo: data.departmentNo,
+//     format: data.format,
+//     items: data.items,
+//     freight: data.charges?.freight ?? 0,
+//     fuelSurcharge: data.charges?.fuelSurcharge ?? 0,
+//     otherCharges:
+//       (data.charges?.otherCharges ?? 0) +
+//       (data.charges?.contractCharges ?? 0) +
+//       (data.charges?.surcharge ?? 0),
+//     discount: data.charges?.discount ?? 0,
+//     charges: data.charges,
+//     gstRate: 18,
+//     paymentType: data.paymentType,
+//     referenceNo: data.referenceNo,
+//     commercial: data.commercial,
+//     oda: data.oda,
+//     medicalCharges: data.medicalCharges,
+//     totalPieces: data.totalPieces,
+//     packageType: data.packageType,
+//     actualWeight: data.actualWeight,
+//     volumetricWeight: data.volumetricWeight,
+//     chargeableWeight: data.chargeableWeight,
+//     shipmentValue: data.shipmentValue,
+//     currency: data.currency,
+//   };
+// }
+
+// function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
+//   const origin =
+//     data.origin ||
+//     data.shipper.origin ||
+//     data.shipper.city ||
+//     data.shipper.pincode ||
+//     "";
+//   const originCode = data.originCode || data.shipper.originCode || "";
+//   const senderId =
+//     str(data.shipper.senderId).trim() || "WALKIN_SENDER";
+//   const receiverId =
+//     str(data.consignee.receiverId).trim() || "WALKIN_RECEIVER";
+
+//   return {
+//     ...(existingAwb ? { awb: existingAwb, existingAwb } : {}),
+//     customerId: data.customerId || data.accountCode || "WALKIN",
+//     senderId,
+//     receiverId,
+//     customerName: data.customerName,
+//     customerCode: data.customerCode || data.accountCode || "",
+//     accountCode: data.accountCode,
+//     origin,
+//     originCode,
+//     destination:
+//       data.destination || data.consignee.city || data.consignee.country,
+//     destinationCode: data.destinationCode,
+//     serviceType: deriveServiceType(data.product, data.destination),
+//     product: data.product,
+//     vendor: data.vendor,
+//     serviceId: data.service || data.product || "SELF",
+//     service: data.service,
+//     shipmentDate: data.bookDate,
+//     description: data.content || data.instruction,
+//     content: data.content,
+//     instruction: data.instruction,
+//     shipper: {
+//       ...data.shipper,
+//       company: data.shipper.company,
+//       companyName: data.shipper.company,
+//       contactName: data.shipper.contactName,
+//       origin,
+//       originCode,
+//     },
+//     consignee: {
+//       ...data.consignee,
+//       company: data.consignee.company,
+//       companyName: data.consignee.company,
+//       contactName: data.consignee.contactName,
+//       country: data.consignee.country,
+//     },
+//     pieces: (data.pieces || []).map((p, i) => ({
+//       quantity: Number(p.quantity) || 1,
+//       actualWeightKg: Number(p.weightKg) || 0,
+//       lengthCm: Number(p.lengthCm) || 0,
+//       widthCm: Number(p.widthCm) || 0,
+//       heightCm: Number(p.heightCm) || 0,
+//       description: p.description?.trim() || `Piece ${i + 1}`,
+//       division: Number(p.division) || undefined,
+//     })),
+//     gstin: data.shipper.gstin || undefined,
+//     csbType: data.csbType,
+//     termOfInvoice: data.termOfInvoice,
+//     exportReason: data.exportReason,
+//     gstInvoice: data.gstInvoice,
+//     invoiceNo: data.invoiceNo,
+//     invoiceDate: data.invoiceDate,
+//     departmentNo: data.departmentNo,
+//     format: data.format,
+//     items: data.items,
+//     freight: data.charges?.freight ?? 0,
+//     fuelSurcharge: data.charges?.fuelSurcharge ?? 0,
+//     otherCharges:
+//       (data.charges?.otherCharges ?? 0) +
+//       (data.charges?.contractCharges ?? 0) +
+//       (data.charges?.surcharge ?? 0),
+//     discount: data.charges?.discount ?? 0,
+//     charges: data.charges,
+//     gstRate: 18,
+//     paymentType: data.paymentType,
+//     referenceNo: data.referenceNo,
+//     commercial: data.commercial,
+//     oda: data.oda,
+//     medicalCharges: data.medicalCharges,
+//     totalPieces: data.totalPieces,
+//     packageType: data.packageType,
+//     actualWeight: data.actualWeight,
+//     volumetricWeight: data.volumetricWeight,
+//     chargeableWeight: data.chargeableWeight,
+//     shipmentValue: data.shipmentValue,
+//     declaredValue: data.shipmentValue,
+//     currency: data.currency,
+//   };
+// }
+
 function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
   const origin =
     data.origin ||
@@ -8090,6 +8489,10 @@ function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
     str(data.shipper.senderId).trim() || "WALKIN_SENDER";
   const receiverId =
     str(data.consignee.receiverId).trim() || "WALKIN_RECEIVER";
+
+  // Exact values from the form dropdown — no predefined mapping
+  const selectedService = String(data.service || data.product || "").trim();
+  const selectedProduct = String(data.product || data.service || "").trim();
 
   return {
     ...(existingAwb ? { awb: existingAwb, existingAwb } : {}),
@@ -8104,11 +8507,14 @@ function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
     destination:
       data.destination || data.consignee.city || data.consignee.country,
     destinationCode: data.destinationCode,
-    serviceType: deriveServiceType(data.product, data.destination),
-    product: data.product,
+
+    // Service: store exactly what was selected for this AWB
+    product: selectedProduct,
+    service: selectedService,
+    serviceId: selectedService || selectedProduct || "SELF",
+    serviceType: selectedService || selectedProduct,
+
     vendor: data.vendor,
-    serviceId: data.service || data.product || "SELF",
-    service: data.service,
     shipmentDate: data.bookDate,
     description: data.content || data.instruction,
     content: data.content,
@@ -8126,6 +8532,7 @@ function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
       company: data.consignee.company,
       companyName: data.consignee.company,
       contactName: data.consignee.contactName,
+      country: data.consignee.country,
     },
     pieces: (data.pieces || []).map((p, i) => ({
       quantity: Number(p.quantity) || 1,
@@ -8166,6 +8573,7 @@ function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
     volumetricWeight: data.volumetricWeight,
     chargeableWeight: data.chargeableWeight,
     shipmentValue: data.shipmentValue,
+    declaredValue: data.shipmentValue,
     currency: data.currency,
   };
 }
@@ -8535,11 +8943,29 @@ export default function BookingPage() {
 
       // setCreatedAwb(awb);
       // setMessage(json.message || "AWB created successfully.");
-            if (isEdit) {
+      // if (isEdit) {
+      //   setMessage(json.message || "AWB updated successfully.");
+      //   router.push(
+      //     `/admin/logistics/awb/${encodeURIComponent(editAwb)}`,
+      //   );
+      //   return;
+      // }
+
+      // if (isEdit) {
+      //   setMessage(json.message || "AWB updated successfully.");
+      //   router.push(
+      //     `/admin/logistics/awb/${encodeURIComponent(editAwb)}?t=${Date.now()}`,
+      //   );
+      //   router.refresh();
+      //   return;
+      // }
+
+      if (isEdit) {
         setMessage(json.message || "AWB updated successfully.");
         router.push(
-          `/admin/logistics/awb/${encodeURIComponent(editAwb)}`,
+          `/admin/logistics/awb/${encodeURIComponent(editAwb)}?t=${Date.now()}`,
         );
+        router.refresh();
         return;
       }
 

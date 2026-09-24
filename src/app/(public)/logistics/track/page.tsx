@@ -181,7 +181,7 @@ export default function TrackPage() {
         </section>
       </main>
 
-      <footer className="footer">
+      {/* <footer className="footer">
         <div className="container-site footer-main">
           <div>
             <img
@@ -221,7 +221,7 @@ export default function TrackPage() {
         <div className="container-site footer-bottom">
           © {new Date().getFullYear()} Sreshta Logistics.
         </div>
-      </footer>
+      </footer> */}
     </>
   );
 }

@@ -4362,21 +4362,52 @@ function normalizeShipment(
     ? shipment.pieces.length
     : Number(shipment.totalPieces || 0);
 
-  const actualWeightKg = Number(shipment.actualWeight || 0);
-  const chargeableWeightKg = Number(
-    shipment.chargeableWeight || actualWeightKg || 0,
+  // const actualWeightKg = Number(shipment.actualWeight || 0);
+  // const chargeableWeightKg = Number(
+  //   shipment.chargeableWeight || actualWeightKg || 0,
+  // );
+
+  const actualWeightKg = Number(
+    shipment.actualWeight ?? shipment.actualWeightKg ?? 0,
   );
+  const chargeableWeightKg = Number(
+    shipment.chargeableWeight ??
+      shipment.chargeableWeightKg ??
+      actualWeightKg ??
+      0,
+  );
+
+  // const freight = Number(charges.freight || 0);
+  // const fuelSurcharge = Number(charges.fuelSurcharge || 0);
+  // const otherCharges = Number(
+  //   charges.otherCharges || charges.additionalCharges || 0,
+  // );
+  // const tax = Number(charges.tax || gst.totalTax || 0);
+  // const total = Number(
+  //   charges.total || freight + fuelSurcharge + otherCharges + tax,
+  // );
+  // const declaredValueNum = Number(shipment.declaredValue || 0);
 
   const freight = Number(charges.freight || 0);
   const fuelSurcharge = Number(charges.fuelSurcharge || 0);
   const otherCharges = Number(
-    charges.otherCharges || charges.additionalCharges || 0,
+    charges.otherCharges ||
+      charges.contractCharges ||
+      0,
   );
-  const tax = Number(charges.tax || gst.totalTax || 0);
+  const tax = Number(
+    charges.igst ||
+      charges.tax ||
+      gst.totalTax ||
+      Number(charges.cgst || 0) + Number(charges.sgst || 0) ||
+      0,
+  );
   const total = Number(
     charges.total || freight + fuelSurcharge + otherCharges + tax,
   );
-  const declaredValueNum = Number(shipment.declaredValue || 0);
+  const declaredValueNum = Number(
+    shipment.declaredValue ?? shipment.shipmentValue ?? 0,
+  );
 
   const items = Array.isArray(shipment.items)
     ? (shipment.items as Record<string, unknown>[]).map((i) => {
@@ -4406,10 +4437,20 @@ function normalizeShipment(
       shipment.customerName || shipment.customerId,
       "Customer",
     ),
+    // service: text(
+    //   shipment.serviceType || shipment.serviceName || shipment.serviceId,
+    //   "—",
+    // ),
+
     service: text(
-      shipment.serviceType || shipment.serviceName || shipment.serviceId,
+      shipment.service ||
+        shipment.product ||
+        shipment.serviceType ||
+        shipment.serviceName ||
+        shipment.serviceId,
       "—",
     ),
+
     origin: text(shipment.origin),
     destination: text(shipment.destination),
     pieces: piecesCount > 0 ? String(piecesCount) : "—",
@@ -4446,11 +4487,24 @@ function normalizeShipment(
       receiver.name || receiver.companyName || shipment.receiverName,
       "—",
     ),
+    // receiverAddress: text(
+    //   [receiver.addressLine1, receiver.addressLine2]
+    //     .filter(Boolean)
+    //     .join(", ") || shipment.receiverAddress,
+    // ),
+
     receiverAddress: text(
-      [receiver.addressLine1, receiver.addressLine2]
+      [
+        receiver.addressLine1,
+        receiver.addressLine2,
+        receiver.city,
+        receiver.state,
+        receiver.pincode || receiver.postalCode,
+      ]
         .filter(Boolean)
         .join(", ") || shipment.receiverAddress,
     ),
+
     // receiverPhone: text(receiver.phone || shipment.receiverPhone),
     receiverPhone: text(
       receiver.mobile ||

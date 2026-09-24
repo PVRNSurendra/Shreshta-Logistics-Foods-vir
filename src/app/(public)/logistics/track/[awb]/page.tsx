@@ -5880,16 +5880,26 @@ export default async function TrackingDetailPage({
     events.filter((e) => e.completed).at(-1)?.location ||
     "—";
 
-  const completedCount = events.filter((e) => e.completed).length;
+  // const completedCount = events.filter((e) => e.completed).length;
+  // const progressHeight =
+  //   events.length <= 1
+  //     ? 0
+  //     : completedCount <= 0
+  //       ? 0
+  //       : Math.min(
+  //           100,
+  //           ((completedCount - 1) / Math.max(events.length - 1, 1)) * 100,
+  //         );
+
+
+    // Public timeline: only stages that have been reached
+  const visibleEvents = events.filter((e) => e.completed || e.active);
+
+  const completedCount = visibleEvents.length;
+  // All visible items are completed → progress line fills the track
   const progressHeight =
-    events.length <= 1
-      ? 0
-      : completedCount <= 0
-        ? 0
-        : Math.min(
-            100,
-            ((completedCount - 1) / Math.max(events.length - 1, 1)) * 100,
-          );
+    completedCount <= 1 ? 0 : 100;
+
 
   return (
     <>
@@ -5978,7 +5988,7 @@ export default async function TrackingDetailPage({
                   Configure stages.
                 </p>
 
-                {events.length === 0 ? (
+                {/* {events.length === 0 ? (
                   <div className="notice" style={{ marginTop: 35 }}>
                     No tracking stages available for this AWB.
                   </div>
@@ -5989,7 +5999,19 @@ export default async function TrackingDetailPage({
                       style={{ height: `${progressHeight}%` }}
                       aria-hidden
                     />
-                    {events.map((event) => (
+                    {events.map((event) => ( */}
+                                    {visibleEvents.length === 0 ? (
+                  <div className="notice" style={{ marginTop: 35 }}>
+                    No tracking updates yet for this AWB.
+                  </div>
+                ) : (
+                  <div className="timeline" style={{ marginTop: 35 }}>
+                    <div
+                      className="timeline-progress"
+                      style={{ height: `${progressHeight}%` }}
+                      aria-hidden
+                    />
+                    {visibleEvents.map((event) => (
                       <div
                         className={`timeline-item ${
                           event.completed ? "active" : ""

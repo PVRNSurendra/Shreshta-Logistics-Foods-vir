@@ -702,6 +702,47 @@ table {
   font-size: 0.78rem;
 }
 
+/* ---------- Tracking summary ---------- */
+
+.tracking-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 30px;
+}
+
+/* Center 2nd row (items 5 & 6) under the middle of the top row */
+.tracking-summary .summary-box:nth-child(5) {
+  grid-column: 2;
+}
+
+.tracking-summary .summary-box:nth-child(6) {
+  grid-column: 3;
+}
+
+.summary-box {
+  border: 1px solid var(--logistics-border);
+  border-radius: 10px;
+  background: white;
+  padding: 18px;
+}
+
+.summary-box span {
+  display: block;
+  color: #64748b;
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.summary-box strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--logistics-navy);
+  font-size: 0.96rem;
+  word-break: break-word;
+}
+
 /* ---------- Tracking timeline ---------- */
 
 .timeline {
@@ -710,14 +751,28 @@ table {
   gap: 0;
 }
 
+/* Light full track */
 .timeline::before {
   position: absolute;
   top: 12px;
   bottom: 12px;
   left: 10px;
-  width: 2px;
-  background: var(--logistics-teal, #0f9d9a);
+  width: 3px;
+  background: #d2dee8;
   content: "";
+  border-radius: 2px;
+}
+
+/* Thick teal progress through completed steps only */
+.timeline-progress {
+  position: absolute;
+  top: 12px;
+  left: 9px;
+  width: 5px;
+  border-radius: 3px;
+  background: var(--logistics-teal, #0f9d9a);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .timeline-item {
@@ -761,36 +816,6 @@ table {
   margin: 4px 0 0;
   color: #64748b;
   font-size: 0.82rem;
-}
-
-.tracking-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 30px;
-}
-
-.summary-box {
-  border: 1px solid var(--logistics-border);
-  border-radius: 10px;
-  background: white;
-  padding: 18px;
-}
-
-.summary-box span {
-  display: block;
-  color: #64748b;
-  font-size: 0.73rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.summary-box strong {
-  display: block;
-  margin-top: 5px;
-  color: var(--logistics-navy);
-  font-size: 0.96rem;
-  word-break: break-word;
 }
 
 .admin-nav {
@@ -925,6 +950,12 @@ table {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  /* Reset forced columns so 2×3 layout works */
+  .tracking-summary .summary-box:nth-child(5),
+  .tracking-summary .summary-box:nth-child(6) {
+    grid-column: auto;
+  }
+
   .footer-main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 36px;
@@ -1011,6 +1042,11 @@ table {
   .form-grid,
   .tracking-summary {
     grid-template-columns: 1fr;
+  }
+
+  .tracking-summary .summary-box:nth-child(5),
+  .tracking-summary .summary-box:nth-child(6) {
+    grid-column: auto;
   }
 
   .footer-main {

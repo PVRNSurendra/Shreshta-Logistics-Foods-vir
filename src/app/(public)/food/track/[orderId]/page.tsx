@@ -753,19 +753,45 @@ function buildTimeline(status: FoodOrderStatus): TimelineStage[] {
   });
 }
 
-function paymentLabel(status: FoodOrderStatus): {
+// function paymentLabel(status: FoodOrderStatus): {
+//   text: string;
+//   color: string;
+// } {
+//   if (status === "PENDING_PAYMENT") {
+//     return { text: "Pending", color: "#b45309" };
+//   }
+//   if (status === "CANCELLED") {
+//     return { text: "Cancelled", color: "#b91c1c" };
+//   }
+//   if (status === "REFUNDED") {
+//     return { text: "Refunded", color: "#b45309" };
+//   }
+//   return { text: "Paid", color: "#15803d" };
+// }
+
+function paymentLabel(
+  status: FoodOrderStatus,
+  paymentStatus?: string,
+): {
   text: string;
   color: string;
 } {
-  if (status === "PENDING_PAYMENT") {
+  const pay = String(paymentStatus || "").toUpperCase();
+
+  if (
+    status === "PENDING_PAYMENT" ||
+    pay === "PENDING" ||
+    pay === ""
+  ) {
     return { text: "Pending", color: "#b45309" };
   }
-  if (status === "CANCELLED") {
+  if (status === "CANCELLED" || pay === "FAILED") {
     return { text: "Cancelled", color: "#b91c1c" };
   }
-  if (status === "REFUNDED") {
+  if (status === "REFUNDED" || pay === "REFUNDED") {
     return { text: "Refunded", color: "#b45309" };
   }
+  // Paid via Cashfree → order is CONFIRMED (or later stages)
   return { text: "Paid", color: "#15803d" };
 }
 
@@ -881,7 +907,10 @@ export default function FoodOrderTrackingPage() {
     return buildTimeline(tracking.status);
   }, [tracking]);
 
-  const payment = tracking ? paymentLabel(tracking.status) : null;
+  // const payment = tracking ? paymentLabel(tracking.status) : null;
+    const payment = tracking
+    ? paymentLabel(tracking.status, tracking.paymentStatus)
+    : null;
 
   return (
     <>

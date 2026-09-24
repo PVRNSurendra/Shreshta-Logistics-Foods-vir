@@ -8092,12 +8092,23 @@ function mapAwbDocToForm(
     shipper.originCode ?? raw.originCode ?? shipper.cityCode,
   );
 
-  const destination = str(
+  // const destination = str(
+  //   raw.destination ?? consignee.city ?? consignee.country,
+  // );
+  // const destinationCode = str(
+  //   raw.destinationCode ?? consignee.destinationCode,
+  // );
+
+    const destination = str(
     raw.destination ?? consignee.city ?? consignee.country,
   );
   const destinationCode = str(
-    raw.destinationCode ?? consignee.destinationCode,
+    raw.destinationCode ||
+      consignee.destinationCode ||
+      (consignee as { destCode?: string }).destCode ||
+      "",
   );
+  
   const consigneeCountry = str(
     consignee.country ??
       raw.receiverCountry ??
@@ -8164,17 +8175,51 @@ function mapAwbDocToForm(
   );
 
   return {
+    // customerId: str(raw.customerId),
+    // customerName: str(raw.customerName),
+    // customerCode: str(raw.customerCode),
+    // accountCode: str(raw.accountCode),
+    // origin,
+    // originCode,
+    // destination,
+    // destinationCode,
+    // product: str(raw.product ?? raw.serviceType),
+    // vendor: str(raw.vendor),
+    // service: str(raw.service ?? raw.serviceId) || "SELF",
     customerId: str(raw.customerId),
-    customerName: str(raw.customerName),
-    customerCode: str(raw.customerCode),
-    accountCode: str(raw.accountCode),
+    // customerName: str(raw.customerName),
+    customerName: str(
+      raw.customerName ||
+        raw.coLoaderName ||
+        raw.coloaderName ||
+        "",
+    ),
+    // customerCode: str(raw.customerCode ?? raw.accountCode),
+    customerCode: str(
+      raw.customerCode ||
+        raw.accountCode ||
+        raw.coLoaderCode ||
+        "",
+    ),
+    // accountCode: str(
+    //   raw.accountCode ?? raw.customerCode ?? raw.coLoaderCode,
+    // ),
+    accountCode: str(
+      raw.accountCode ||
+        raw.customerCode ||
+        raw.coLoaderCode ||
+        raw.coloaderCode ||
+        "",
+    ),
     origin,
     originCode,
     destination,
     destinationCode,
     product: str(raw.product ?? raw.serviceType),
+    productCode: str(raw.productCode),
     vendor: str(raw.vendor),
     service: str(raw.service ?? raw.serviceId) || "SELF",
+    serviceCode: str(raw.serviceCode),
     bookDate:
       str(raw.shipmentDate ?? raw.bookDate).slice(0, 10) || undefined,
     content: str(raw.description ?? raw.content),
@@ -8509,11 +8554,19 @@ function mapFormToBody(data: AWBBookingData, existingAwb?: string) {
     destinationCode: data.destinationCode,
 
     // Service: store exactly what was selected for this AWB
+    // product: selectedProduct,
+    // service: selectedService,
+    // serviceId: selectedService || selectedProduct || "SELF",
+    // serviceType: selectedService || selectedProduct,
+
+    // vendor: data.vendor,
+
     product: selectedProduct,
+    productCode: str(data.productCode),
     service: selectedService,
+    serviceCode: str(data.serviceCode),
     serviceId: selectedService || selectedProduct || "SELF",
     serviceType: selectedService || selectedProduct,
-
     vendor: data.vendor,
     shipmentDate: data.bookDate,
     description: data.content || data.instruction,
